@@ -45,3 +45,4 @@ Desktop.ini
 **/.env.*.local
 !**/.env.template
 
+documents/
