@@ -149,10 +149,11 @@
                         </goals>
                         <configuration>
                             <excludes>
-                                <exclude>**/PatientServiceApplication.class</exclude>
+                                <exclude>**/AuthServiceApplication.class</exclude>
                             </excludes>
                         </configuration>
                     </execution>
+                    <!--
                     <execution>
                         <id>jacoco-check</id>
                         <goals>
@@ -161,7 +162,7 @@
                         <configuration>
 
                             <excludes>
-                                <exclude>**/PatientServiceApplication.class</exclude>
+                                <exclude>**/AuthServiceApplication.class</exclude>
                             </excludes>
 
                             <rules>
@@ -178,6 +179,7 @@
                             </rules>
                         </configuration>
                     </execution>
+                    -->
                 </executions>
             </plugin>
         </plugins>

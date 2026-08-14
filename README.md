@@ -1,12 +1,24 @@
 # MedSync Platform
 
-A production-oriented healthcare backend platform built with **Spring Boot microservices**, **Spring Cloud**, **JWT authentication**, **PostgreSQL**, and **Docker**.
+[![CI](https://github.com/Abraham-Lara-Rodriguez/medsync-platform/actions/workflows/ci.yml/badge.svg)](https://github.com/Abraham-Lara-Rodriguez/medsync-platform/actions/workflows/ci.yml)
+![GitHub repo size](https://img.shields.io/github/repo-size/Abraham-Lara-Rodriguez/medsync-platform)
+![GitHub stars](https://img.shields.io/github/stars/Abraham-Lara-Rodriguez/medsync-platform?style=social)
+![GitHub last commit](https://img.shields.io/github/last-commit/Abraham-Lara-Rodriguez/medsync-platform)
+![GitHub license](https://img.shields.io/github/license/Abraham-Lara-Rodriguez/medsync-platform)
 
-MedSync Platform is designed as a modular and scalable microservices architecture that demonstrates enterprise backend development practices, including centralized configuration, service discovery, API gateway routing, shared security, standardized error handling, database migrations, and containerized deployment.
+# MedSync Platform
+
+A production-oriented healthcare backend platform built with **Spring Boot microservices**, **Spring Cloud**, **JWT
+authentication**, **PostgreSQL**, and **Docker**.
+
+MedSync Platform is designed as a modular and scalable microservices architecture that demonstrates enterprise backend
+development practices, including centralized configuration, service discovery, API gateway routing, shared security,
+standardized error handling, database migrations, and containerized deployment.
 
 ## Architecture
 
-The platform is organized as a Maven multi-module monorepo where infrastructure services, domain services, and shared libraries are separated into independent modules.
+The platform is organized as a Maven multi-module monorepo where infrastructure services, domain services, and shared
+libraries are separated into independent modules.
 
 ```text
                         +-----------------------+
@@ -42,7 +54,7 @@ The platform is organized as a Maven multi-module monorepo where infrastructure 
 ## Modules
 
 | Module              | Description                                                                               |
-| ------------------- | ----------------------------------------------------------------------------------------- |
+|---------------------|-------------------------------------------------------------------------------------------|
 | `auth-service`      | Authentication, JWT token issuance, refresh tokens, user management, and authorization    |
 | `patient-service`   | Patient management, encrypted sensitive data storage, validation, and business rules      |
 | `api-gateway`       | Central entry point, routing, load balancing, and service exposure                        |
@@ -130,7 +142,7 @@ docker compose up --build
 The platform starts the following services:
 
 | Service              | Port |
-| -------------------- | ---- |
+|----------------------|------|
 | Config Service       | 8888 |
 | Discovery Service    | 8761 |
 | API Gateway          | 8222 |
@@ -160,17 +172,21 @@ medsync-platform/
 
 ### common-security
 
-Provides reusable JWT validation and resource server configuration that can be consumed by any microservice requiring authentication.
+Provides reusable JWT validation and resource server configuration that can be consumed by any microservice requiring
+authentication.
 
 ### common-core
 
-Provides a consistent error model across all services using RFC 7807 Problem Details, shared error codes, and centralized exception handling.
+Provides a consistent error model across all services using RFC 7807 Problem Details, shared error codes, and
+centralized exception handling.
 
 ## Security Model
 
-Authentication is centralized in the **Auth Service**, while resource services validate JWT tokens through the **common-security** module.
+Authentication is centralized in the **Auth Service**, while resource services validate JWT tokens through the *
+*common-security** module.
 
-The authorization model is based on **roles and granular authorities**, allowing endpoint-level permission control through Spring Security.
+The authorization model is based on **roles and granular authorities**, allowing endpoint-level permission control
+through Spring Security.
 
 ## Design Principles
 
