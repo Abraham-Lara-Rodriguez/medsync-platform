@@ -1,0 +1,16 @@
+spring:
+  jpa:
+    show-sql: false
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+    locations: classpath:db/migration/V1__init_users
+    baseline-on-migrate: true
+springdoc:
+  api-docs:
+    enabled: false
+
+  swagger-ui:
+    enabled: false

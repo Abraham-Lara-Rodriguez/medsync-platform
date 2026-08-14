@@ -1,0 +1,7 @@
+spring:
+  application:
+    name: api-gateway
+  profiles:
+    active: ${GATEWAY_SERVER_PROFILES:dev}
+  config:
+    import: optional:configserver:http://${CONFIG_SERVER_HOSTNAME:localhost}:${CONFIG_SERVER_PORT:8888}

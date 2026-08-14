@@ -1,0 +1,8 @@
+spring:
+  application:
+    name: discovery-service
+  cache:
+    caffeine:
+      spec: maximumSize=500,expireAfterWrite=5m
+  config:
+    import: optional:configserver:http://${CONFIG_SERVER_HOSTNAME:localhost}:${CONFIG_SERVER_PORT:8888}

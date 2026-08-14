@@ -1,0 +1,7 @@
+spring:
+  application:
+    name: patient-service
+  profiles:
+    active: ${PATIENT_SPRING_PROFILES:default}
+  config:
+    import: optional:configserver:http://${CONFIG_SERVER_HOSTNAME:localhost}:${CONFIG_SERVER_PORT:8888}

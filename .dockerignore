@@ -1,0 +1,35 @@
+# ------------------------------------------------------------
+# Global Docker build context excludes (compose uses repo root)
+# ------------------------------------------------------------
+
+# VCS
+.git/
+.gitignore
+.gitattributes
+
+# IDE/editor metadata
+.idea/
+.vscode/
+**/.idea/
+**/.vscode/
+
+# Build outputs
+**/target/
+**/build/
+**/.gradle/
+
+# Logs
+**/logs/
+**/*.log
+**/*.log.*
+
+# OS artifacts
+**/.DS_Store
+**/Thumbs.db
+**/Desktop.ini
+
+# Environment files / secrets
+**/.env
+**/.env.*
+!deployment/.env.template
+

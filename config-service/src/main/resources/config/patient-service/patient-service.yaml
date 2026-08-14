@@ -1,0 +1,21 @@
+logging:
+  level:
+    org.hibernate: warn
+    org.springframework.jdbc: warn
+    com.medsync.patientservice: info
+
+medsync:
+  security:
+    secret-key: ${AUTH_SERVER_SECRET_KEY}
+  encryption:
+    key: ${ENCRYPTION_KEY}
+  hash:
+    key: ${MEDSYNC_HASH_KEY}
+
+eureka:
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${server.port}
+
+server:
+  port: ${PATIENT_SERVER_PORT:8002}

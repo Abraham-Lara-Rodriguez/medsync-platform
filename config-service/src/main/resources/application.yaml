@@ -1,0 +1,21 @@
+logging:
+  level:
+    org.springframework.cloud.config.server.environment.NativeEnvironmentRepository: WARN
+
+spring:
+  application:
+    name: config-service
+  profiles:
+    active: native
+  config:
+    import: classpath:./config/common/application.yaml
+  cloud:
+    config:
+      server:
+        native:
+          search-locations:
+            - classpath:./config/common
+            - classpath:./config/{application}
+
+server:
+  port: ${CONFIG_SERVER_PORT:8888}

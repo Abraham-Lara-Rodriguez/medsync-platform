@@ -1,0 +1,3 @@
+# Shared ignore rules are managed at repository root: /.gitignore
+# Keep only service-local exclusions here.
+HELP.md

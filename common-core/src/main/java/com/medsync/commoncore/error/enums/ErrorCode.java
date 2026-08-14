@@ -1,0 +1,14 @@
+package com.medsync.commoncore.error.enums;
+
+public enum ErrorCode {
+    BAD_REQUEST,
+    VALIDATION_ERROR,
+    INVALID_PARAMETER,
+    RESOURCE_NOT_FOUND,
+    DUPLICATE_RESOURCE,
+    CONFLICT,
+    INVALID_CREDENTIALS,
+    UNAUTHORIZED,
+    FORBIDDEN,
+    INTERNAL_ERROR
+}

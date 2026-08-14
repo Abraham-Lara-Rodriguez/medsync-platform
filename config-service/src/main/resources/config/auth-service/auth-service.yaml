@@ -1,0 +1,43 @@
+spring:
+  devtools:
+    add-properties: false
+
+  datasource:
+    url: ${AUTH_DB_URL}
+    username: ${AUTH_DB_USERNAME}
+    password: ${AUTH_DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    show-sql: false
+    hibernate:
+      ddl-auto: update
+
+  security:
+    user:
+      name: ${AUTH_SERVER_ADMIN_USERNAME}
+      password: ${AUTH_SERVER_ADMIN_PASSWORD}
+      roles: ${AUTH_SERVER_ADMIN_ROLE}
+
+
+eureka:
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${server.port}
+
+auth-service:
+  security:
+    secret-key: ${AUTH_SERVER_SECRET_KEY}
+    access-token-expiration: ${AUTH_SERVER_ACCESS_TOKEN_EXPIRATION:3600000}
+    refresh-token-expiration: ${AUTH_SERVER_REFRESH_TOKEN_EXPIRATION:86400000}
+    password-strength: ${AUTH_SERVER_PASSWORD_STRENGTH:10}
+    client-origin: ${AUTH_SERVER_CLIENT_ORIGIN:http://localhost:3000}
+
+logging:
+  level:
+    org.hibernate: warn
+    org.springframework.jdbc: warn
+    com.medsync.authservice: info
+
+server:
+  port: ${AUTH_SERVER_PORT:8001}

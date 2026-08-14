@@ -1,0 +1,47 @@
+# ------------------------------------------------------------
+# Global ignores for medsync-platform monorepo
+# ------------------------------------------------------------
+
+# OS artifacts
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# IDE/editor metadata
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+.classpath
+.project
+.settings/
+.factorypath
+.apt_generated
+.springBeans
+.sts4-cache
+/.nb-gradle/
+
+# Maven/Java build outputs
+**/target/
+**/build/
+!**/src/main/**/target/
+!**/src/test/**/target/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+# Maven wrapper binary (generated)
+**/.mvn/wrapper/maven-wrapper.jar
+
+# Logs and dumps
+**/logs/
+**/*.log
+**/*.log.*
+*.hprof
+
+# Local env files and secrets
+**/.env
+**/.env.local
+**/.env.*.local
+!**/.env.template
+

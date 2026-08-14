@@ -1,0 +1,15 @@
+logging:
+  level:
+    com.medsync.discoveryservice: info
+
+eureka:
+  instance:
+    hostname: ${DISCOVERY_SERVER_HOSTNAME:localhost}
+  client:
+    registerWithEureka: false
+    fetchRegistry: false
+    serviceUrl:
+      defaultZone: http://${eureka.instance.hostname}:${server.port}/eureka/
+
+server:
+  port: ${DISCOVERY_SERVER_PORT:8761}

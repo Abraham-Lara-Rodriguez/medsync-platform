@@ -1,0 +1,245 @@
+services:
+
+  # ==================== INFRASTRUCTURE ====================
+
+  patient-service-postgres:
+    image: postgres:18
+    container_name: patient-service-postgres
+    restart: unless-stopped
+    env_file:
+      - ./.env
+    environment:
+      POSTGRES_DB: ${PATIENT_DB_NAME}
+      POSTGRES_USER: ${PATIENT_DB_USERNAME}
+      POSTGRES_PASSWORD: ${PATIENT_DB_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - patient-service-postgres-volume:/var/lib/postgresql
+    networks:
+      - medsync-network
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${PATIENT_DB_USERNAME} -d ${PATIENT_DB_NAME}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  auth-service-postgres:
+    image: postgres:18
+    container_name: auth-service-postgres
+    restart: unless-stopped
+    env_file:
+      - ./.env
+    environment:
+      POSTGRES_DB: ${AUTH_DB_NAME}
+      POSTGRES_USER: ${AUTH_DB_USERNAME}
+      POSTGRES_PASSWORD: ${AUTH_DB_PASSWORD}
+    ports:
+      - "5433:5432"
+    volumes:
+      - auth-service-postgres-volume:/var/lib/postgresql
+    networks:
+      - medsync-network
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${AUTH_DB_USERNAME} -d ${AUTH_DB_NAME}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # ==================== CONFIG SERVER ====================
+
+  config-service:
+    build:
+      context: ..
+      dockerfile: config-service/Dockerfile
+    container_name: config-service
+    restart: unless-stopped
+    environment:
+      CONFIG_SERVER_PORT: ${CONFIG_SERVER_PORT}
+      JAVA_OPTS: "-Xms256m -Xmx512m"
+    ports:
+      - "8888:8888"
+    networks:
+      - medsync-network
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8888/actuator/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+    depends_on:
+      patient-service-postgres:
+        condition: service_healthy
+      auth-service-postgres:
+        condition: service_healthy
+
+  # ==================== DISCOVERY SERVICE ====================
+
+  discovery-service:
+    build:
+      context: ..
+      dockerfile: discovery-service/Dockerfile
+    container_name: discovery-service
+    restart: unless-stopped
+    environment:
+      CONFIG_SERVER_HOSTNAME: ${CONFIG_SERVER_HOSTNAME}
+      CONFIG_SERVER_PORT: ${CONFIG_SERVER_PORT}
+      DISCOVERY_SERVER_HOSTNAME: ${DISCOVERY_SERVER_HOSTNAME}
+      DISCOVERY_SERVER_PORT: ${DISCOVERY_SERVER_PORT}
+      JAVA_OPTS: "-Xms256m -Xmx512m"
+    ports:
+      - "8761:8761"
+    depends_on:
+      config-service:
+        condition: service_healthy
+    networks:
+      - medsync-network
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8761/actuator/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+
+  # ==================== API GATEWAY ====================
+
+  api-gateway:
+    build:
+      context: ..
+      dockerfile: api-gateway/Dockerfile
+    container_name: api-gateway
+    restart: unless-stopped
+    environment:
+      GATEWAY_SERVER_PROFILES: ${GATEWAY_SERVER_PROFILES}
+      CONFIG_SERVER_HOSTNAME: ${CONFIG_SERVER_HOSTNAME}
+      CONFIG_SERVER_PORT: ${CONFIG_SERVER_PORT}
+      DISCOVERY_SERVER_HOSTNAME: ${DISCOVERY_SERVER_HOSTNAME}
+      DISCOVERY_SERVER_PORT: ${DISCOVERY_SERVER_PORT}
+      GATEWAY_SERVER_PORT: ${GATEWAY_SERVER_PORT}
+      JAVA_OPTS: "-Xms256m -Xmx512m"
+    ports:
+      - "8222:8222"
+    depends_on:
+      config-service:
+        condition: service_healthy
+      discovery-service:
+        condition: service_healthy
+    networks:
+      - medsync-network
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8222/actuator/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+
+  # ==================== AUTH SERVICE ====================
+
+  auth-service:
+    build:
+      context: ..
+      dockerfile: auth-service/Dockerfile
+    container_name: auth-service
+    restart: unless-stopped
+    env_file:
+      - ./.env
+    environment:
+      AUTH_DB_URL: ${AUTH_DB_URL}
+      AUTH_DB_USERNAME: ${AUTH_DB_USERNAME}
+      AUTH_DB_PASSWORD: ${AUTH_DB_PASSWORD}
+
+      AUTH_SERVER_PORT: ${AUTH_SERVER_PORT}
+      AUTH_SERVER_PROFILES: ${AUTH_SERVER_PROFILES}
+
+      AUTH_SERVER_ADMIN_USERNAME: ${AUTH_SERVER_ADMIN_USERNAME}
+      AUTH_SERVER_ADMIN_PASSWORD: ${AUTH_SERVER_ADMIN_PASSWORD}
+      AUTH_SERVER_ADMIN_ROLE: ${AUTH_SERVER_ADMIN_ROLE}
+
+      AUTH_SERVER_SECRET_KEY: ${AUTH_SERVER_SECRET_KEY}
+      AUTH_SERVER_ACCESS_TOKEN_EXPIRATION: ${AUTH_SERVER_ACCESS_TOKEN_EXPIRATION}
+      AUTH_SERVER_REFRESH_TOKEN_EXPIRATION: ${AUTH_SERVER_REFRESH_TOKEN_EXPIRATION}
+      AUTH_SERVER_PASSWORD_STRENGTH: ${AUTH_SERVER_PASSWORD_STRENGTH}
+      AUTH_SERVER_CLIENT_ORIGIN: ${AUTH_SERVER_CLIENT_ORIGIN}
+
+      CONFIG_SERVER_HOSTNAME: ${CONFIG_SERVER_HOSTNAME}
+      CONFIG_SERVER_PORT: ${CONFIG_SERVER_PORT}
+      DISCOVERY_SERVER_HOSTNAME: ${DISCOVERY_SERVER_HOSTNAME}
+      DISCOVERY_SERVER_PORT: ${DISCOVERY_SERVER_PORT}
+
+      JAVA_OPTS: "-Xms256m -Xmx512m"
+
+    ports:
+      - "8001:8001"
+
+    depends_on:
+      auth-service-postgres:
+        condition: service_healthy
+      config-service:
+        condition: service_healthy
+      discovery-service:
+        condition: service_healthy
+
+    networks:
+      - medsync-network
+
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8001/actuator/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+
+  # ==================== PATIENT SERVICE ====================
+
+  patient-service:
+    build:
+      context: ..
+      dockerfile: patient-service/Dockerfile
+    container_name: patient-service
+    restart: unless-stopped
+    env_file:
+      - ./.env
+    environment:
+      PATIENT_DB_URL: ${PATIENT_DB_URL}
+      PATIENT_DB_USERNAME: ${PATIENT_DB_USERNAME}
+      PATIENT_DB_PASSWORD: ${PATIENT_DB_PASSWORD}
+      PATIENT_SERVER_PORT: ${PATIENT_SERVER_PORT}
+      PATIENT_SPRING_PROFILES: ${PATIENT_SPRING_PROFILES}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+      MEDSYNC_HASH_KEY: ${MEDSYNC_HASH_KEY}
+      CONFIG_SERVER_HOSTNAME: ${CONFIG_SERVER_HOSTNAME}
+      CONFIG_SERVER_PORT: ${CONFIG_SERVER_PORT}
+      DISCOVERY_SERVER_HOSTNAME: ${DISCOVERY_SERVER_HOSTNAME}
+      DISCOVERY_SERVER_PORT: ${DISCOVERY_SERVER_PORT}
+      JAVA_OPTS: "-Xms256m -Xmx512m"
+    ports:
+      - "8002:8002"
+    depends_on:
+      patient-service-postgres:
+        condition: service_healthy
+      config-service:
+        condition: service_healthy
+      discovery-service:
+        condition: service_healthy
+      auth-service:
+        condition: service_healthy
+    networks:
+      - medsync-network
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8002/actuator/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+
+# ==================== VOLUMES ====================
+
+volumes:
+  patient-service-postgres-volume:
+  auth-service-postgres-volume:
+
+# ==================== NETWORKS ====================
+
+networks:
+  medsync-network:
+    driver: bridge
