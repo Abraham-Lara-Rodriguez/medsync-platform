@@ -11,6 +11,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
@@ -31,11 +32,12 @@ public class GlobalExceptionHandler extends AbstractGlobalExceptionHandler {
         return log;
     }
 
-    // =====================================================================
-    // Lo que sigue es específico de auth-service; todo lo demás
-    // (validación, 404, 409 por duplicado, 401 credenciales, 403, 500)
-    // ya lo resuelve AbstractGlobalExceptionHandler.
-    // =====================================================================
+// =====================================================================
+// The handlers below are specific to auth-service.
+// All other common cases (validation, 404, duplicate resources,
+// 401 authentication failures, 403 authorization errors, and 500
+// internal errors) are handled by AbstractGlobalExceptionHandler.
+// =====================================================================
 
     @ExceptionHandler({MethodArgumentTypeMismatchException.class, HttpMessageNotReadableException.class, IllegalArgumentException.class})
     public ResponseEntity<ProblemDetails> handleBadRequest(Exception ex, HttpServletRequest req) {
@@ -53,4 +55,11 @@ public class GlobalExceptionHandler extends AbstractGlobalExceptionHandler {
         log.warn("invalid_token: {}", ex.getMessage());
         return problem(HttpStatus.UNAUTHORIZED, BASE_TYPE + "/invalid-token", "Invalid or expired token", req, ErrorCode.UNAUTHORIZED);
     }
+
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<ProblemDetails> handleAuthenticationException(AuthenticationException ex, HttpServletRequest req) {
+        log.warn("Authentication failed: {}", ex.getMessage());
+        return problem(HttpStatus.UNAUTHORIZED, BASE_TYPE + "/authentication-failed", "Authentication failed", req, ErrorCode.UNAUTHORIZED);
+    }
+
 }
