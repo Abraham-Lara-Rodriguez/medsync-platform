@@ -41,8 +41,10 @@ Desktop.ini
 
 # Local env files and secrets
 **/.env
+**/.env.docker
 **/.env.local
 **/.env.*.local
 !**/.env.template
+
 
 documents/
