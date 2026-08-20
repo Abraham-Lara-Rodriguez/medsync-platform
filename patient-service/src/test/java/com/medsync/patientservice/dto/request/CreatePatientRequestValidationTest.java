@@ -6,6 +6,7 @@ import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
@@ -24,6 +25,7 @@ class CreatePatientRequestValidationTest {
     }
 
     @Test
+    @DisplayName("Should Accept Valid Request")
     void shouldAcceptValidRequest() {
         CreatePatientRequest request = new CreatePatientRequest(
                 "Juan",
@@ -43,6 +45,7 @@ class CreatePatientRequestValidationTest {
     }
 
     @Test
+    @DisplayName("Should Reject Invalid Request")
     void shouldRejectInvalidRequest() {
         CreatePatientRequest request = new CreatePatientRequest(
                 "",

@@ -1,0 +1,32 @@
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+  application:
+    name: patient-service
+  config:
+    import: "" # disable config-server import during tests
+  cloud:
+    config:
+      enabled: false
+    discovery:
+      enabled: false
+
+eureka:
+  client:
+    enabled: false
+    register-with-eureka: false
+    fetch-registry: false
+
+medsync:
+  security:
+    secret-key: dGVzdC1zZWNyZXQta2V5LWZvci1qd3QtdGVzdHMtbXVzdC1iZS1sb25nLWVub3VnaA==
+  encryption:
+    key: dGVzdC1zZWNyZXQta2V5LWZvci1qd3QtdGVzdHMtbXVzdC1iZS1sb25nLWVub3VnaA==
+  hash:
+    key: dGVzdC1zZWNyZXQta2V5LWZvci1qd3QtdGVzdHMtbXVzdC1iZS1sb25nLWVub3VnaA==
+
+logging:
+  level:
+    org.testcontainers: WARN
+    com.github.dockerjava: WARN

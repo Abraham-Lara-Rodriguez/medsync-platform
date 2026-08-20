@@ -1,20 +1,30 @@
 package com.medsync.patientservice.mapper;
 
+import com.medsync.patientservice.domain.converter.DeterministicHasher;
 import com.medsync.patientservice.domain.entity.Patient;
 import com.medsync.patientservice.domain.enums.BloodType;
 import com.medsync.patientservice.domain.enums.Gender;
 import com.medsync.patientservice.dto.response.PatientResponse;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+
 class PatientMapperTest {
 
     private final PatientMapper patientMapper = new PatientMapperImpl();
 
+    @BeforeAll
+    static void setUp() {
+        DeterministicHasher.initialize("test-hash-secret");
+    }
+
     @Test
+    @DisplayName("Should to Response")
     void toResponse() {
         Patient entity = Patient.create(
                 "Gracie",
@@ -45,6 +55,7 @@ class PatientMapperTest {
     }
 
     @Test
+    @DisplayName("Should to Response With Null")
     void toResponseWithNull() {
         assertNull(patientMapper.toResponse(null));
     }

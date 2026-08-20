@@ -2,6 +2,7 @@ package com.medsync.patientservice.domain.converter;
 
 import org.jasypt.util.text.AES256TextEncryptor;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -17,6 +18,7 @@ class EncryptionConfigTest {
     }
 
     @Test
+    @DisplayName("Should Initialize Encryptor When Key Is Present")
     void shouldInitializeEncryptorWhenKeyIsPresent() {
         ReflectionTestUtils.setField(encryptionConfig, "encryptionKey", "test-encryption-key-1234567890");
 
@@ -37,6 +39,7 @@ class EncryptionConfigTest {
     }
 
     @Test
+    @DisplayName("Should Fail When Key Is Blank")
     void shouldFailWhenKeyIsBlank() {
         ReflectionTestUtils.setField(encryptionConfig, "encryptionKey", " ");
 
@@ -44,6 +47,7 @@ class EncryptionConfigTest {
     }
 
     @Test
+    @DisplayName("Should Fail When Key Is Null")
     void shouldFailWhenKeyIsNull() {
         ReflectionTestUtils.setField(encryptionConfig, "encryptionKey", null);
 
@@ -51,6 +55,7 @@ class EncryptionConfigTest {
     }
 
     @Test
+    @DisplayName("Should Not Leak Plaintext Key In Bean Initialization Result")
     void shouldNotLeakPlaintextKeyInBeanInitializationResult() {
         ReflectionTestUtils.setField(encryptionConfig, "encryptionKey", "test-encryption-key-1234567890");
 

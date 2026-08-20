@@ -1,8 +1,11 @@
 package com.medsync.patientservice.domain.entity;
 
+import com.medsync.patientservice.domain.converter.DeterministicHasher;
 import com.medsync.patientservice.domain.enums.BloodType;
 import com.medsync.patientservice.domain.enums.Gender;
 import com.medsync.patientservice.domain.enums.PatientStatus;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Field;
@@ -13,7 +16,13 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class PatientTest {
 
+    @BeforeAll
+    static void setUp() {
+        DeterministicHasher.initialize("test-hash-secret");
+    }
+
     @Test
+    @DisplayName("Should Create Valid Patient")
     void shouldCreateValidPatient() {
         Patient patient = createPatient();
         assertAll(
@@ -31,6 +40,7 @@ class PatientTest {
     }
 
     @Test
+    @DisplayName("Should Trim First Name")
     void shouldTrimFirstName() {
         Patient patient = createPatient();
         patient.changeFirstName("  Abraham  ");
@@ -38,6 +48,7 @@ class PatientTest {
     }
 
     @Test
+    @DisplayName("Should Throw When First Name Is Null")
     void shouldThrowWhenFirstNameIsNull() {
         Patient patient = createPatient();
         assertAll(
@@ -47,12 +58,14 @@ class PatientTest {
     }
 
     @Test
+    @DisplayName("Should Throw When First Name Is Blank")
     void shouldThrowWhenFirstNameIsBlank() {
         Patient patient = createPatient();
         assertThrows(IllegalArgumentException.class, () -> patient.changeFirstName(" "));
     }
 
     @Test
+    @DisplayName("Should Trim Last Name")
     void shouldTrimLastName() {
         Patient patient = createPatient();
         patient.changeLastName("  Rodriguez  ");
@@ -60,6 +73,7 @@ class PatientTest {
     }
 
     @Test
+    @DisplayName("Should Throw When Last Name Is Blank")
     void shouldThrowWhenLastNameIsBlank() {
         Patient patient = createPatient();
         assertAll(
@@ -70,6 +84,7 @@ class PatientTest {
     }
 
     @Test
+    @DisplayName("Should Accept Valid Document Number")
     void shouldAcceptValidDocumentNumber() {
         Patient patient = createPatient();
         patient.changeDocumentNumber("87654321");
@@ -77,6 +92,7 @@ class PatientTest {
     }
 
     @Test
+    @DisplayName("Should Normalize Passport Document To Upper Case")
     void shouldNormalizePassportDocumentToUpperCase() {
         Patient patient = createPatient();
         patient.changeDocumentNumber("ab123456");
@@ -84,6 +100,7 @@ class PatientTest {
     }
 
     @Test
+    @DisplayName("Should Throw When Document Number Is Invalid")
     void shouldThrowWhenDocumentNumberIsInvalid() {
         Patient patient = createPatient();
         assertAll(
@@ -96,12 +113,14 @@ class PatientTest {
     }
 
     @Test
+    @DisplayName("Should Throw When Gender Is Null")
     void shouldThrowWhenGenderIsNull() {
         Patient patient = createPatient();
         assertThrows(IllegalArgumentException.class, () -> patient.changeGender(null));
     }
 
     @Test
+    @DisplayName("Should Throw When Birth Date Is Invalid")
     void shouldThrowWhenBirthDateIsInvalid() {
         Patient patient = createPatient();
         assertAll(
@@ -112,6 +131,7 @@ class PatientTest {
     }
 
     @Test
+    @DisplayName("Should Set Valid Phone")
     void shouldSetValidPhone() {
         Patient patient = createPatient();
         patient.changePhone("+573002223333");
@@ -119,6 +139,7 @@ class PatientTest {
     }
 
     @Test
+    @DisplayName("Should Throw When Phone Contains Invalid Characters")
     void shouldThrowWhenPhoneContainsInvalidCharacters() {
         Patient patient = createPatient();
         assertAll(
@@ -130,6 +151,7 @@ class PatientTest {
     }
 
     @Test
+    @DisplayName("Should Normalize Email To Lower Case")
     void shouldNormalizeEmailToLowerCase() {
         Patient patient = createPatient();
         patient.changeEmail("ABRAHAM@TEST.COM");
@@ -137,6 +159,7 @@ class PatientTest {
     }
 
     @Test
+    @DisplayName("Should Update Email Hash When Email Changes")
     void shouldUpdateEmailHashWhenEmailChanges() throws Exception {
         Patient patient = createPatient();
         String previousHash = getField(patient, "emailHash");
@@ -150,6 +173,7 @@ class PatientTest {
     }
 
     @Test
+    @DisplayName("Should Throw When Email Format Is Invalid")
     void shouldThrowWhenEmailFormatIsInvalid() {
         Patient patient = createPatient();
         assertAll(
@@ -164,6 +188,7 @@ class PatientTest {
     }
 
     @Test
+    @DisplayName("Should Change Address To Is Invalid")
     void shouldChangeAddressToIsInvalid() {
         Patient patient = createPatient();
         patient.changeAddress("");
@@ -176,6 +201,7 @@ class PatientTest {
     }
 
     @Test
+    @DisplayName("Should Set Valid Address")
     void shouldSetValidAddress() {
         Patient patient = createPatient();
         patient.changeAddress("Calle 100 #10-20");
@@ -183,6 +209,7 @@ class PatientTest {
     }
 
     @Test
+    @DisplayName("Should Trim And Nullify Blank Address")
     void shouldTrimAndNullifyBlankAddress() {
         Patient patient = createPatient();
         patient.changeAddress("   ");
@@ -193,18 +220,21 @@ class PatientTest {
     }
 
     @Test
+    @DisplayName("Should Throw When Blood Type Is Null")
     void shouldThrowWhenBloodTypeIsNull() {
         Patient patient = createPatient();
         assertThrows(IllegalArgumentException.class, () -> patient.changeBloodType(null));
     }
 
     @Test
+    @DisplayName("Should Throw When Status Is Null")
     void shouldThrowWhenStatusIsNull() {
         Patient patient = createPatient();
         assertThrows(IllegalArgumentException.class, () -> patient.changeStatus(null));
     }
 
     @Test
+    @DisplayName("Should Update Status")
     void shouldUpdateStatus() {
         Patient patient = createPatient();
         patient.changeStatus(PatientStatus.INACTIVE);
@@ -212,12 +242,14 @@ class PatientTest {
     }
 
     @Test
+    @DisplayName("Should Create Patient With Active Status")
     void shouldCreatePatientWithActiveStatus() {
         Patient patient = createPatient();
         assertEquals(PatientStatus.ACTIVE, patient.getStatus());
     }
 
     @Test
+    @DisplayName("Should Update Document And Phone Hashes When Values Change")
     void shouldUpdateDocumentAndPhoneHashesWhenValuesChange() throws Exception {
         Patient patient = createPatient();
         String documentHash = getField(patient, "documentNumberHash");
@@ -233,6 +265,7 @@ class PatientTest {
     }
 
     @Test
+    @DisplayName("Should Be Equal When Ids Are Equal")
     void shouldBeEqualWhenIdsAreEqual() throws Exception {
         UUID id = UUID.randomUUID();
         Patient patient1 = createPatient();
@@ -243,6 +276,7 @@ class PatientTest {
     }
 
     @Test
+    @DisplayName("Should Not Be Equal When Ids Are Different")
     void shouldNotBeEqualWhenIdsAreDifferent() throws Exception {
         Patient patient1 = createPatient();
         Patient patient2 = createPatient();
@@ -252,6 +286,7 @@ class PatientTest {
     }
 
     @Test
+    @DisplayName("Should Return Same Hash Code For Same Class")
     void shouldReturnSameHashCodeForSameClass() {
         Patient patient1 = createPatient();
         Patient patient2 = createPatient();
@@ -259,6 +294,7 @@ class PatientTest {
     }
 
     @Test
+    @DisplayName("Should equals should follow identity rules")
     void equals_should_follow_identity_rules() {
         Patient p = createPatient();
 
@@ -267,6 +303,7 @@ class PatientTest {
     }
 
     @Test
+    @DisplayName("Should equals should use id for comparison")
     void equals_should_use_id_for_comparison() throws Exception {
         Patient p1 = createPatient();
         Patient p2 = createPatient();
@@ -282,6 +319,7 @@ class PatientTest {
     }
 
     @Test
+    @DisplayName("Should equals should return false when id is null")
     void equals_should_return_false_when_id_is_null() {
         Patient p1 = createPatient();
         Patient p2 = createPatient();

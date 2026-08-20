@@ -9,6 +9,7 @@ import com.medsync.patientservice.dto.response.PatientResponse;
 import com.medsync.patientservice.exception.handler.GlobalExceptionHandler;
 import com.medsync.patientservice.service.PatientService;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -37,7 +38,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @ExtendWith(MockitoExtension.class)
 class PatientControllerTest {
-
     private MockMvc mockMvc;
 
     @Mock
@@ -67,6 +67,7 @@ class PatientControllerTest {
     /* ================= GET ALL ================= */
 
     @Test
+    @DisplayName("Should get All Patients")
     void getAllPatients() throws Exception {
         Page<PatientResponse> page = new PageImpl<>(List.of(patientResponse), PageRequest.of(0, 10), 1);
         when(patientService.getAllPatients(any(Pageable.class))).thenReturn(page);
@@ -83,6 +84,7 @@ class PatientControllerTest {
     }
 
     @Test
+    @DisplayName("Should get All Patients Should Return Empty Page")
     void getAllPatientsShouldReturnEmptyPage() throws Exception {
         Page<PatientResponse> emptyPage = new PageImpl<>(Collections.emptyList(), PageRequest.of(0, 10), 0);
         when(patientService.getAllPatients(any(Pageable.class))).thenReturn(emptyPage);
@@ -99,6 +101,7 @@ class PatientControllerTest {
     /* ================= GET BY ID ================= */
 
     @Test
+    @DisplayName("Should get Patient By Id")
     void getPatientById() throws Exception {
         when(patientService.getPatientById(patientId)).thenReturn(patientResponse);
 
@@ -113,6 +116,7 @@ class PatientControllerTest {
     }
 
     @Test
+    @DisplayName("Should get Patient By Id Should Return Not Found When Missing")
     void getPatientByIdShouldReturnNotFoundWhenMissing() throws Exception {
         when(patientService.getPatientById(patientId))
                 .thenThrow(new ResourceNotFoundException("Patient not found"));
@@ -127,6 +131,7 @@ class PatientControllerTest {
     /* ================= CREATE ================= */
 
     @Test
+    @DisplayName("Should create Patient")
     void createPatient() throws Exception {
         when(patientService.createPatient(any(CreatePatientRequest.class))).thenReturn(patientResponse);
 
@@ -142,6 +147,7 @@ class PatientControllerTest {
     }
 
     @Test
+    @DisplayName("Should create Patient Should Fail When Invalid")
     void createPatientShouldFailWhenInvalid() throws Exception {
         mockMvc.perform(post("/api/v1/patients")
                         .contentType("application/json")
@@ -152,6 +158,7 @@ class PatientControllerTest {
     }
 
     @Test
+    @DisplayName("Should create Patient Should Return Bad Request When Dto Is Invalid")
     void createPatientShouldReturnBadRequestWhenDtoIsInvalid() throws Exception {
         mockMvc.perform(post("/api/v1/patients")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -164,6 +171,7 @@ class PatientControllerTest {
     /* ================= UPDATE ================= */
 
     @Test
+    @DisplayName("Should update Patient")
     void updatePatient() throws Exception {
         when(patientService.updatePatient(eq(patientId), any(UpdatePatientRequest.class)))
                 .thenReturn(samplePatientResponse(patientId, updateRequest));
@@ -179,6 +187,7 @@ class PatientControllerTest {
     }
 
     @Test
+    @DisplayName("Should update Patient Should Return Not Found When Missing")
     void updatePatientShouldReturnNotFoundWhenMissing() throws Exception {
         when(patientService.updatePatient(eq(patientId), any(UpdatePatientRequest.class)))
                 .thenThrow(new ResourceNotFoundException("Patient not found"));
@@ -192,6 +201,7 @@ class PatientControllerTest {
     }
 
     @Test
+    @DisplayName("Should update Patient Should Return Bad Request When Dto Is Invalid")
     void updatePatientShouldReturnBadRequestWhenDtoIsInvalid() throws Exception {
         mockMvc.perform(put("/api/v1/patients/{id}", patientId)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -204,6 +214,7 @@ class PatientControllerTest {
     /* ================= DEACTIVATE ================= */
 
     @Test
+    @DisplayName("Should deactivate Patient")
     void deactivatePatient() throws Exception {
         doNothing().when(patientService).deactivatePatient(patientId);
 
@@ -214,6 +225,7 @@ class PatientControllerTest {
     }
 
     @Test
+    @DisplayName("Should deactivate Patient Should Return Not Found When Missing")
     void deactivatePatientShouldReturnNotFoundWhenMissing() throws Exception {
         doThrow(new ResourceNotFoundException("Patient not found"))
                 .when(patientService).deactivatePatient(patientId);

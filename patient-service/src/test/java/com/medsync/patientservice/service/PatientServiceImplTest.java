@@ -2,6 +2,7 @@ package com.medsync.patientservice.service;
 
 import com.medsync.commoncore.error.custom.DuplicateResourceException;
 import com.medsync.commoncore.error.custom.ResourceNotFoundException;
+import com.medsync.patientservice.domain.converter.DeterministicHasher;
 import com.medsync.patientservice.domain.entity.Patient;
 import com.medsync.patientservice.domain.enums.BloodType;
 import com.medsync.patientservice.domain.enums.Gender;
@@ -12,6 +13,7 @@ import com.medsync.patientservice.dto.response.PatientResponse;
 import com.medsync.patientservice.mapper.PatientMapper;
 import com.medsync.patientservice.repository.PatientRepository;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -23,20 +25,17 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDate;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
+
 
 @ExtendWith(MockitoExtension.class)
 class PatientServiceImplTest {
-
-    /* ================= MOCKS ================= */
 
     @Mock
     private PatientRepository patientRepository;
@@ -53,275 +52,222 @@ class PatientServiceImplTest {
     @InjectMocks
     private PatientServiceImpl patientService;
 
-    /* ================= FIXTURES ================= */
-
     private UUID patientId;
     private Patient patient;
-    private PatientResponse patientResponse;
+    private PatientResponse response;
     private CreatePatientRequest createRequest;
     private UpdatePatientRequest updateRequest;
-
+    private PatientHashService.PatientHashes hashes;
+    
     @BeforeEach
     void setUp() {
+        DeterministicHasher.initialize("test-hash-secret");
         patientId = UUID.randomUUID();
-
         patient = samplePatient();
-        patientResponse = samplePatientResponse(patientId);
+        response = sampleResponse(patientId);
         createRequest = sampleCreateRequest();
         updateRequest = sampleUpdateRequest();
+        hashes = new PatientHashService.PatientHashes("email-hash", "document-hash", "phone-hash");
     }
 
-    /* ================= GET ALL ================= */
-
     @Test
-    void getAllPatients() {
-        Pageable pageable = PageRequest.of(0, 10);
-        Page<Patient> patientPage = new PageImpl<>(List.of(patient), pageable, 1);
+    @DisplayName("Should get All Patients Should Return Mapped Page")
+    void getAllPatientsShouldReturnMappedPage() {
+        Pageable pageable = PageRequest.of(0, 20);
+        Page<Patient> page = new PageImpl<>(List.of(patient), pageable, 1);
 
-        when(patientRepository.findAll(pageable)).thenReturn(patientPage);
-        when(patientMapper.toResponse(patient)).thenReturn(patientResponse);
+        when(patientRepository.findAll(pageable)).thenReturn(page);
+        when(patientMapper.toResponse(patient)).thenReturn(response);
 
         Page<PatientResponse> result = patientService.getAllPatients(pageable);
 
-        assertNotNull(result);
         assertEquals(1, result.getTotalElements());
-        assertEquals(patientResponse, result.getContent().get(0));
+        assertEquals(response, result.getContent().get(0));
         verify(patientRepository).findAll(pageable);
         verify(patientMapper).toResponse(patient);
     }
 
     @Test
-    void getAllPatientsShouldReturnEmptyPage() {
-        Pageable pageable = PageRequest.of(0, 10);
-        Page<Patient> emptyPage = new PageImpl<>(Collections.emptyList());
+    @DisplayName("Should get All Patients Should Allow Maximum Page Size")
+    void getAllPatientsShouldAllowMaximumPageSize() {
+        Pageable pageable = PageRequest.of(0, 100);
+        when(patientRepository.findAll(pageable)).thenReturn(new PageImpl<>(List.of()));
 
-        when(patientRepository.findAll(pageable)).thenReturn(emptyPage);
-
-        Page<PatientResponse> result = patientService.getAllPatients(pageable);
-
-        assertNotNull(result);
-        assertTrue(result.isEmpty());
+        assertDoesNotThrow(() -> patientService.getAllPatients(pageable));
         verify(patientRepository).findAll(pageable);
     }
 
     @Test
-    void getAllPatientsShouldFailWhenPageSizeExceedsMaximum() {
+    @DisplayName("Should get All Patients Should Reject Page Size Above Maximum")
+    void getAllPatientsShouldRejectPageSizeAboveMaximum() {
         Pageable pageable = PageRequest.of(0, 101);
 
-        assertThrows(IllegalArgumentException.class, () -> patientService.getAllPatients(pageable));
+        IllegalArgumentException ex = assertThrows(
+                IllegalArgumentException.class,
+                () -> patientService.getAllPatients(pageable)
+        );
+
+        assertEquals("Page size must not exceed 100", ex.getMessage());
         verify(patientRepository, never()).findAll(any(Pageable.class));
     }
 
-    /* ================= GET BY ID ================= */
-
     @Test
-    void getPatientById() {
+    @DisplayName("Should get Patient By Id Should Return Mapped Patient")
+    void getPatientByIdShouldReturnMappedPatient() {
         when(patientRepository.findById(patientId)).thenReturn(Optional.of(patient));
-        when(patientMapper.toResponse(patient)).thenReturn(patientResponse);
+        when(patientMapper.toResponse(patient)).thenReturn(response);
 
-        PatientResponse result = patientService.getPatientById(patientId);
-
-        assertNotNull(result);
-        assertEquals(patientResponse, result);
-        verify(patientRepository).findById(patientId);
-        verify(patientMapper).toResponse(patient);
+        assertEquals(response, patientService.getPatientById(patientId));
     }
 
     @Test
-    void getPatientByIdShouldFailWhenMissing() {
+    @DisplayName("Should get Patient By Id Should Throw When Missing")
+    void getPatientByIdShouldThrowWhenMissing() {
         when(patientRepository.findById(patientId)).thenReturn(Optional.empty());
 
-        assertThrows(ResourceNotFoundException.class, () -> patientService.getPatientById(patientId));
-        verify(patientRepository).findById(patientId);
+        ResourceNotFoundException ex = assertThrows(
+                ResourceNotFoundException.class,
+                () -> patientService.getPatientById(patientId)
+        );
+
+        assertEquals("Patient not found with id: " + patientId, ex.getMessage());
         verify(patientMapper, never()).toResponse(any());
     }
 
-    /* ================= CREATE ================= */
-
     @Test
-    void createPatient() {
-        Patient createdPatient = Patient.create(
-                createRequest.firstName(),
-                createRequest.lastName(),
-                createRequest.documentNumber(),
-                createRequest.gender(),
-                createRequest.birthDate(),
-                createRequest.phone(),
-                createRequest.email(),
-                createRequest.address(),
-                createRequest.bloodType()
-        );
-
-        when(patientHashService.fromCreateRequest(createRequest)).thenReturn(sampleHashes());
-        doNothing().when(patientUniquenessValidator).validateForCreate(any());
-        when(patientRepository.save(any(Patient.class))).thenReturn(createdPatient);
-        when(patientMapper.toResponse(createdPatient)).thenReturn(patientResponse);
+    @DisplayName("Should create Patient Should Hash Validate Save And Map")
+    void createPatientShouldHashValidateSaveAndMap() {
+        when(patientHashService.fromCreateRequest(createRequest)).thenReturn(hashes);
+        when(patientRepository.save(any(Patient.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(patientMapper.toResponse(any(Patient.class))).thenReturn(response);
 
         PatientResponse result = patientService.createPatient(createRequest);
 
-        assertNotNull(result);
-        assertEquals(patientResponse.firstName(), result.firstName());
-        assertEquals(patientResponse.email(), result.email());
+        assertEquals(response, result);
+        verify(patientHashService).fromCreateRequest(createRequest);
+        verify(patientUniquenessValidator).validateForCreate(hashes);
         verify(patientRepository).save(any(Patient.class));
         verify(patientMapper).toResponse(any(Patient.class));
     }
 
     @Test
-    void createPatientShouldFailWhenEmailAlreadyExists() {
-        when(patientHashService.fromCreateRequest(createRequest)).thenReturn(sampleHashes());
+    @DisplayName("Should create Patient Should Not Save When Duplicate Exists")
+    void createPatientShouldNotSaveWhenDuplicateExists() {
+        when(patientHashService.fromCreateRequest(createRequest)).thenReturn(hashes);
         doThrow(new DuplicateResourceException("Email already exists"))
-                .when(patientUniquenessValidator).validateForCreate(any());
+                .when(patientUniquenessValidator).validateForCreate(hashes);
 
         assertThrows(DuplicateResourceException.class, () -> patientService.createPatient(createRequest));
 
-        verify(patientHashService).fromCreateRequest(createRequest);
-        verify(patientUniquenessValidator).validateForCreate(any());
-        verify(patientRepository, never()).save(any(Patient.class));
+        verify(patientRepository, never()).save(any());
+        verify(patientMapper, never()).toResponse(any());
     }
 
-    /* ================= UPDATE ================= */
-
     @Test
-    void updatePatient() {
+    @DisplayName("Should update Patient Should Change All Mutable Fields")
+    void updatePatientShouldChangeAllMutableFields() {
         when(patientRepository.findById(patientId)).thenReturn(Optional.of(patient));
-        when(patientHashService.fromUpdateRequest(updateRequest)).thenReturn(sampleHashes());
-        doNothing().when(patientUniquenessValidator).validateForUpdate(eq(patientId), any());
-        when(patientRepository.save(any(Patient.class))).thenReturn(patient);
-        PatientResponse updatedResponse = samplePatientResponse(patientId, updateRequest);
-        when(patientMapper.toResponse(patient)).thenReturn(updatedResponse);
+        when(patientHashService.fromUpdateRequest(updateRequest)).thenReturn(hashes);
+        when(patientRepository.save(patient)).thenReturn(patient);
+        when(patientMapper.toResponse(patient)).thenReturn(response);
+
         PatientResponse result = patientService.updatePatient(patientId, updateRequest);
-        assertNotNull(result);
-        assertEquals(updateRequest.firstName(), result.firstName());
-        assertEquals(updateRequest.email(), result.email());
-        verify(patientRepository).findById(patientId);
-        verify(patientRepository).save(any(Patient.class));
-        verify(patientMapper).toResponse(patient);
+
+        assertEquals(response, result);
+        assertAll(
+                () -> assertEquals("Juan Carlos", patient.getFirstName()),
+                () -> assertEquals("Pérez López", patient.getLastName()),
+                () -> assertEquals("87654321", patient.getDocumentNumber()),
+                () -> assertEquals(Gender.MALE, patient.getGender()),
+                () -> assertEquals(LocalDate.of(1990, 1, 15), patient.getBirthDate()),
+                () -> assertEquals("+573007654321", patient.getPhone()),
+                () -> assertEquals("juancarlos@example.com", patient.getEmail()),
+                () -> assertEquals("Calle 456", patient.getAddress()),
+                () -> assertEquals(BloodType.A_POSITIVE, patient.getBloodType())
+        );
+        verify(patientUniquenessValidator).validateForUpdate(patientId, hashes);
+        verify(patientRepository).save(patient);
     }
 
     @Test
-    void updatePatientShouldFailWhenMissing() {
+    @DisplayName("Should update Patient Should Throw When Patient Does Not Exist")
+    void updatePatientShouldThrowWhenPatientDoesNotExist() {
         when(patientRepository.findById(patientId)).thenReturn(Optional.empty());
-        assertThrows(ResourceNotFoundException.class, () -> patientService.updatePatient(patientId, updateRequest));
-        verify(patientRepository).findById(patientId);
+
+        assertThrows(ResourceNotFoundException.class,
+                () -> patientService.updatePatient(patientId, updateRequest));
+
+        verify(patientHashService, never()).fromUpdateRequest(any());
+        verify(patientRepository, never()).save(any());
     }
 
     @Test
-    void updatePatientShouldFailWhenDocumentNumberAlreadyExists() {
+    @DisplayName("Should update Patient Should Not Save When Duplicate Email Exists")
+    void updatePatientShouldNotSaveWhenDuplicateEmailExists() {
         when(patientRepository.findById(patientId)).thenReturn(Optional.of(patient));
-        when(patientHashService.fromUpdateRequest(updateRequest)).thenReturn(sampleHashes());
-        doThrow(new DuplicateResourceException("Document number already exists"))
-                .when(patientUniquenessValidator).validateForUpdate(eq(patientId), any());
+        when(patientHashService.fromUpdateRequest(updateRequest)).thenReturn(hashes);
+        doThrow(new DuplicateResourceException("Email already registered"))
+                .when(patientUniquenessValidator).validateForUpdate(patientId, hashes);
 
-        assertThrows(DuplicateResourceException.class, () -> patientService.updatePatient(patientId, updateRequest));
+        assertThrows(DuplicateResourceException.class,
+                () -> patientService.updatePatient(patientId, updateRequest));
 
-        verify(patientRepository).findById(patientId);
-        verify(patientHashService).fromUpdateRequest(updateRequest);
-        verify(patientUniquenessValidator).validateForUpdate(eq(patientId), any());
-        verify(patientRepository, never()).save(any(Patient.class));
+        verify(patientRepository, never()).save(any());
     }
 
-    /* ================= DEACTIVATE ================= */
-
     @Test
-    void deactivatePatient() {
+    @DisplayName("Should deactivate Patient Should Set Inactive And Save")
+    void deactivatePatientShouldSetInactiveAndSave() {
         when(patientRepository.findById(patientId)).thenReturn(Optional.of(patient));
-        when(patientRepository.save(any(Patient.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(patientRepository.save(patient)).thenReturn(patient);
 
         patientService.deactivatePatient(patientId);
 
-        verify(patientRepository).findById(patientId);
-        verify(patientRepository).save(any(Patient.class));
         assertEquals(PatientStatus.INACTIVE, patient.getStatus());
+        verify(patientRepository).save(patient);
     }
 
     @Test
-    void deactivatePatientShouldFailWhenMissing() {
+    @DisplayName("Should deactivate Patient Should Throw When Missing")
+    void deactivatePatientShouldThrowWhenMissing() {
         when(patientRepository.findById(patientId)).thenReturn(Optional.empty());
 
-        assertThrows(ResourceNotFoundException.class, () -> patientService.deactivatePatient(patientId));
+        assertThrows(ResourceNotFoundException.class,
+                () -> patientService.deactivatePatient(patientId));
 
-        verify(patientRepository).findById(patientId);
-        verify(patientRepository, never()).save(any(Patient.class));
+        verify(patientRepository, never()).save(any());
     }
-
-
-    /* ================= HELPERS ================= */
 
     private Patient samplePatient() {
         return Patient.create(
-                "Juan",
-                "Pérez",
-                "12345678",
-                Gender.MALE,
-                LocalDate.of(1990, 1, 15),
-                "+573001234567",
-                "juan@example.com",
-                "Calle 123",
-                BloodType.O_POSITIVE
+                "Juan", "Pérez", "12345678", Gender.MALE,
+                LocalDate.of(1990, 1, 15), "+573001234567",
+                "juan@example.com", "Calle 123", BloodType.O_POSITIVE
         );
     }
 
-    private PatientResponse samplePatientResponse(UUID id) {
+    private PatientResponse sampleResponse(UUID id) {
         return new PatientResponse(
-                id,
-                "Juan",
-                "Pérez",
-                "12345678",
-                Gender.MALE,
-                LocalDate.of(1990, 1, 15),
-                "+573001234567",
-                "juan@example.com",
-                "Calle 123",
-                BloodType.O_POSITIVE,
-                com.medsync.patientservice.domain.enums.PatientStatus.ACTIVE
-        );
-    }
-
-    private PatientResponse samplePatientResponse(UUID id, UpdatePatientRequest request) {
-        return new PatientResponse(
-                id,
-                request.firstName(),
-                request.lastName(),
-                request.documentNumber(),
-                request.gender(),
-                request.birthDate(),
-                request.phone(),
-                request.email(),
-                request.address(),
-                request.bloodType(),
-                com.medsync.patientservice.domain.enums.PatientStatus.ACTIVE
+                id, "Juan", "Pérez", "12345678", Gender.MALE,
+                LocalDate.of(1990, 1, 15), "+573001234567",
+                "juan@example.com", "Calle 123",
+                BloodType.O_POSITIVE, PatientStatus.ACTIVE
         );
     }
 
     private CreatePatientRequest sampleCreateRequest() {
         return new CreatePatientRequest(
-                "Juan",
-                "Pérez",
-                "12345678",
-                Gender.MALE,
-                LocalDate.of(1990, 1, 15),
-                "+573001234567",
-                "juan@example.com",
-                "Calle 123",
-                BloodType.O_POSITIVE
+                "Juan", "Pérez", "12345678", Gender.MALE,
+                LocalDate.of(1990, 1, 15), "+573001234567",
+                "juan@example.com", "Calle 123", BloodType.O_POSITIVE
         );
     }
 
     private UpdatePatientRequest sampleUpdateRequest() {
         return new UpdatePatientRequest(
-                "Juan Carlos",
-                "Pérez López",
-                "87654321",
-                Gender.MALE,
-                LocalDate.of(1990, 1, 15),
-                "+573007654321",
-                "juancarlos@example.com",
-                "Calle 456",
-                BloodType.A_POSITIVE
+                "Juan Carlos", "Pérez López", "87654321", Gender.MALE,
+                LocalDate.of(1990, 1, 15), "+573007654321",
+                "juancarlos@example.com", "Calle 456", BloodType.A_POSITIVE
         );
-    }
-
-    private PatientHashService.PatientHashes sampleHashes() {
-        return new PatientHashService.PatientHashes("email-hash", "document-hash", "phone-hash");
     }
 }

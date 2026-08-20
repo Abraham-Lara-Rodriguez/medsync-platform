@@ -46,7 +46,7 @@ public class PatientController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('USER_DESACTIVATE')")
+    @PreAuthorize("hasAuthority('USER_UPDATE')")
     public ResponseEntity<PatientResponse> updatePatient(@PathVariable UUID id, @Valid @RequestBody UpdatePatientRequest request) {
         return ResponseEntity.ok(patientService.updatePatient(id, request));
     }

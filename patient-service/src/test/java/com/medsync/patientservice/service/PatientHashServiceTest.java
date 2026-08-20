@@ -6,6 +6,7 @@ import com.medsync.patientservice.domain.enums.Gender;
 import com.medsync.patientservice.dto.request.CreatePatientRequest;
 import com.medsync.patientservice.dto.request.UpdatePatientRequest;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
@@ -22,6 +23,7 @@ class PatientHashServiceTest {
     }
 
     @Test
+    @DisplayName("Should from Create Request Should Hash Sensitive Fields In Stable Order")
     void fromCreateRequestShouldHashSensitiveFieldsInStableOrder() {
         CreatePatientRequest request = new CreatePatientRequest(
                 "Juan",
@@ -48,6 +50,7 @@ class PatientHashServiceTest {
     }
 
     @Test
+    @DisplayName("Should from Update Request Should Produce Same Hashes For Same Inputs")
     void fromUpdateRequestShouldProduceSameHashesForSameInputs() {
         UpdatePatientRequest request = new UpdatePatientRequest(
                 "Juan",
