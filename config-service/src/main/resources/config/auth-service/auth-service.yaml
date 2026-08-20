@@ -13,13 +13,6 @@ spring:
     hibernate:
       ddl-auto: update
 
-  security:
-    user:
-      name: ${AUTH_SERVER_ADMIN_USERNAME}
-      password: ${AUTH_SERVER_ADMIN_PASSWORD}
-      roles: ${AUTH_SERVER_ADMIN_ROLE}
-
-
 eureka:
   instance:
     prefer-ip-address: true

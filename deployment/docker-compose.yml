@@ -46,6 +46,29 @@ services:
       timeout: 5s
       retries: 10
 
+  appointment-service-postgres:
+    image: postgres:18
+    container_name: appointment-service-postgres
+    restart: unless-stopped
+    env_file:
+      - ./.env
+    environment:
+      POSTGRES_DB: ${APPOINTMENT_DB_NAME}
+      POSTGRES_USER: ${APPOINTMENT_DB_USERNAME}
+      POSTGRES_PASSWORD: ${APPOINTMENT_DB_PASSWORD}
+    ports:
+      - "5434:5432"
+    volumes:
+      - appointment-service-postgres-volume:/var/lib/postgresql
+    networks:
+      - medsync-network
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${APPOINTMENT_DB_USERNAME} -d ${APPOINTMENT_DB_NAME}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+
   # ==================== CONFIG SERVER ====================
 
   config-service:
@@ -151,10 +174,6 @@ services:
       AUTH_SERVER_PORT: ${AUTH_SERVER_PORT}
       AUTH_SERVER_PROFILES: ${AUTH_SERVER_PROFILES}
 
-      AUTH_SERVER_ADMIN_USERNAME: ${AUTH_SERVER_ADMIN_USERNAME}
-      AUTH_SERVER_ADMIN_PASSWORD: ${AUTH_SERVER_ADMIN_PASSWORD}
-      AUTH_SERVER_ADMIN_ROLE: ${AUTH_SERVER_ADMIN_ROLE}
-
       AUTH_SERVER_SECRET_KEY: ${AUTH_SERVER_SECRET_KEY}
       AUTH_SERVER_ACCESS_TOKEN_EXPIRATION: ${AUTH_SERVER_ACCESS_TOKEN_EXPIRATION}
       AUTH_SERVER_REFRESH_TOKEN_EXPIRATION: ${AUTH_SERVER_REFRESH_TOKEN_EXPIRATION}
@@ -237,6 +256,7 @@ services:
 volumes:
   patient-service-postgres-volume:
   auth-service-postgres-volume:
+  appointment-service-postgres-volume:
 
 # ==================== NETWORKS ====================
 
