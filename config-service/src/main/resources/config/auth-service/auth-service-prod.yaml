@@ -6,7 +6,7 @@ spring:
       ddl-auto: validate
   flyway:
     enabled: true
-    locations: classpath:db/migration/V1__init_users
+    locations: classpath:db/migration
     baseline-on-migrate: true
 springdoc:
   api-docs:
