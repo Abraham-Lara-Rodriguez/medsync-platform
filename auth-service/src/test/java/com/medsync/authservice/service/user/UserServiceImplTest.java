@@ -3,9 +3,9 @@ package com.medsync.authservice.service.user;
 import com.medsync.authservice.domain.entity.User;
 import com.medsync.authservice.domain.enums.Role;
 import com.medsync.authservice.domain.enums.UserStatus;
-import com.medsync.authservice.dto.user.request.UserCreateRequest;
+import com.medsync.authservice.dto.user.request.CreateUserRequest;
+import com.medsync.authservice.dto.user.request.UpdateUserRequest;
 import com.medsync.authservice.dto.user.request.UserFilter;
-import com.medsync.authservice.dto.user.request.UserUpdateRequest;
 import com.medsync.authservice.dto.user.response.UserResponse;
 import com.medsync.authservice.mapper.user.UserMapper;
 import com.medsync.authservice.repository.user.UserRepository;
@@ -135,7 +135,7 @@ class UserServiceImplTest {
         @Test
         @DisplayName("creates and saves the user when the email is not taken")
         void createsUserWhenEmailAvailable() {
-            UserCreateRequest request = new UserCreateRequest("new@medsync.com", "raw-password", Role.USER);
+            CreateUserRequest request = new CreateUserRequest("new@medsync.com", "raw-password", Role.USER);
             User savedUser = existingUser("new@medsync.com", Role.USER);
             UserResponse response = new UserResponse(savedUser.getId(), savedUser.getEmail(), savedUser.getRole(), savedUser.getStatus());
 
@@ -158,7 +158,7 @@ class UserServiceImplTest {
         @Test
         @DisplayName("throws DuplicateResourceException and never saves when email already exists")
         void throwsWhenEmailAlreadyExists() {
-            UserCreateRequest request = new UserCreateRequest("dup@medsync.com", "raw-password", Role.USER);
+            CreateUserRequest request = new CreateUserRequest("dup@medsync.com", "raw-password", Role.USER);
             when(userRepository.existsByEmail("dup@medsync.com")).thenReturn(true);
 
             assertThatThrownBy(() -> userService.createUser(request))
@@ -180,7 +180,7 @@ class UserServiceImplTest {
             UUID id = UUID.randomUUID();
             when(userRepository.findById(id)).thenReturn(Optional.empty());
 
-            UserUpdateRequest request = new UserUpdateRequest("a@medsync.com", null, null);
+            UpdateUserRequest request = new UpdateUserRequest("a@medsync.com", null, null);
 
             assertThatThrownBy(() -> userService.updateUser(id, request))
                     .isInstanceOf(ResourceNotFoundException.class);
@@ -196,7 +196,7 @@ class UserServiceImplTest {
             when(userRepository.findById(id)).thenReturn(Optional.of(user));
             when(userRepository.existsByEmail("taken@medsync.com")).thenReturn(true);
 
-            UserUpdateRequest request = new UserUpdateRequest("taken@medsync.com", null, null);
+            UpdateUserRequest request = new UpdateUserRequest("taken@medsync.com", null, null);
 
             assertThatThrownBy(() -> userService.updateUser(id, request))
                     .isInstanceOf(DuplicateResourceException.class)
@@ -215,7 +215,7 @@ class UserServiceImplTest {
             when(userMapper.toResponse(any(User.class))).thenReturn(
                     new UserResponse(user.getId(), user.getEmail(), user.getRole(), user.getStatus()));
 
-            UserUpdateRequest request = new UserUpdateRequest("same@medsync.com", null, null);
+            UpdateUserRequest request = new UpdateUserRequest("same@medsync.com", null, null);
 
             userService.updateUser(id, request);
 
@@ -235,7 +235,7 @@ class UserServiceImplTest {
                 return new UserResponse(u.getId(), u.getEmail(), u.getRole(), u.getStatus());
             });
 
-            UserUpdateRequest request = new UserUpdateRequest("new@medsync.com", null, null);
+            UpdateUserRequest request = new UpdateUserRequest("new@medsync.com", null, null);
 
             UserResponse result = userService.updateUser(id, request);
 
@@ -253,7 +253,7 @@ class UserServiceImplTest {
             when(userMapper.toResponse(any(User.class))).thenReturn(
                     new UserResponse(user.getId(), user.getEmail(), user.getRole(), user.getStatus()));
 
-            UserUpdateRequest request = new UserUpdateRequest("same@medsync.com", "new-raw-password", null);
+            UpdateUserRequest request = new UpdateUserRequest("same@medsync.com", "new-raw-password", null);
 
             userService.updateUser(id, request);
 
@@ -273,7 +273,7 @@ class UserServiceImplTest {
             when(userMapper.toResponse(any(User.class))).thenReturn(
                     new UserResponse(user.getId(), user.getEmail(), user.getRole(), user.getStatus()));
 
-            UserUpdateRequest request = new UserUpdateRequest("same@medsync.com", null, null);
+            UpdateUserRequest request = new UpdateUserRequest("same@medsync.com", null, null);
 
             userService.updateUser(id, request);
 
@@ -293,7 +293,7 @@ class UserServiceImplTest {
                 return new UserResponse(u.getId(), u.getEmail(), u.getRole(), u.getStatus());
             });
 
-            UserUpdateRequest request = new UserUpdateRequest("same@medsync.com", null, Role.ADMIN);
+            UpdateUserRequest request = new UpdateUserRequest("same@medsync.com", null, Role.ADMIN);
 
             UserResponse result = userService.updateUser(id, request);
 
@@ -312,7 +312,7 @@ class UserServiceImplTest {
                 return new UserResponse(u.getId(), u.getEmail(), u.getRole(), u.getStatus());
             });
 
-            UserUpdateRequest request = new UserUpdateRequest("same@medsync.com", null, null);
+            UpdateUserRequest request = new UpdateUserRequest("same@medsync.com", null, null);
 
             UserResponse result = userService.updateUser(id, request);
 
@@ -331,7 +331,7 @@ class UserServiceImplTest {
                 return new UserResponse(u.getId(), u.getEmail(), u.getRole(), u.getStatus());
             });
 
-            UserUpdateRequest request = new UserUpdateRequest("same@medsync.com", null, Role.USER);
+            UpdateUserRequest request = new UpdateUserRequest("same@medsync.com", null, Role.USER);
 
             UserResponse result = userService.updateUser(id, request);
 

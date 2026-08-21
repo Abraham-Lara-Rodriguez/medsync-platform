@@ -1,8 +1,8 @@
 package com.medsync.authservice.controller.user;
 
-import com.medsync.authservice.dto.user.request.UserCreateRequest;
+import com.medsync.authservice.dto.user.request.CreateUserRequest;
+import com.medsync.authservice.dto.user.request.UpdateUserRequest;
 import com.medsync.authservice.dto.user.request.UserFilter;
-import com.medsync.authservice.dto.user.request.UserUpdateRequest;
 import com.medsync.authservice.dto.user.response.UserResponse;
 import com.medsync.authservice.service.user.UserService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -48,7 +48,7 @@ public class UserController {
 
     @PostMapping
     @PreAuthorize("hasAuthority('ADMIN_CREATE')")
-    public ResponseEntity<UserResponse> createUser(@Valid @RequestBody UserCreateRequest request) {
+    public ResponseEntity<UserResponse> createUser(@Valid @RequestBody CreateUserRequest request) {
         UserResponse created = userService.createUser(request);
         return ResponseEntity.created(URI.create("/api/v1/users/" + created.id())).body(created);
     }
@@ -56,7 +56,7 @@ public class UserController {
     @PutMapping("/{id}")
     @PreAuthorize("hasAuthority('ADMIN_UPDATE')")
     @Operation(summary = "Update an existing user")
-    public ResponseEntity<UserResponse> updateUser(@PathVariable UUID id, @Valid @RequestBody UserUpdateRequest request) {
+    public ResponseEntity<UserResponse> updateUser(@PathVariable UUID id, @Valid @RequestBody UpdateUserRequest request) {
         return ResponseEntity.ok(userService.updateUser(id, request));
     }
 }

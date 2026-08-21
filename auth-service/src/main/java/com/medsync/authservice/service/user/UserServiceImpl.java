@@ -1,9 +1,9 @@
 package com.medsync.authservice.service.user;
 
 import com.medsync.authservice.domain.entity.User;
-import com.medsync.authservice.dto.user.request.UserCreateRequest;
+import com.medsync.authservice.dto.user.request.CreateUserRequest;
+import com.medsync.authservice.dto.user.request.UpdateUserRequest;
 import com.medsync.authservice.dto.user.request.UserFilter;
-import com.medsync.authservice.dto.user.request.UserUpdateRequest;
 import com.medsync.authservice.dto.user.response.UserResponse;
 import com.medsync.authservice.mapper.user.UserMapper;
 import com.medsync.authservice.repository.user.UserRepository;
@@ -48,7 +48,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional()
-    public UserResponse createUser(UserCreateRequest request) {
+    public UserResponse createUser(CreateUserRequest request) {
         if (userRepository.existsByEmail(request.email())) {
             throw new DuplicateResourceException("Email already exists: " + request.email());
         }
@@ -59,7 +59,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional()
-    public UserResponse updateUser(UUID id, UserUpdateRequest request) {
+    public UserResponse updateUser(UUID id, UpdateUserRequest request) {
         return userMapper.toResponse(userRepository.save(updateDataFromDto(findByIdOrThrow(id), request)));
     }
 
@@ -68,7 +68,7 @@ public class UserServiceImpl implements UserService {
         return userRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
     }
 
-    private User updateDataFromDto(User user, UserUpdateRequest request) {
+    private User updateDataFromDto(User user, UpdateUserRequest request) {
         if (!user.getEmail().equals(request.email()) && userRepository.existsByEmail(request.email())) {
             throw new DuplicateResourceException("Email already exists: " + request.email());
         }

@@ -3,8 +3,8 @@ package com.medsync.authservice.controller.user;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.medsync.authservice.domain.enums.Role;
 import com.medsync.authservice.domain.enums.UserStatus;
-import com.medsync.authservice.dto.user.request.UserCreateRequest;
-import com.medsync.authservice.dto.user.request.UserUpdateRequest;
+import com.medsync.authservice.dto.user.request.CreateUserRequest;
+import com.medsync.authservice.dto.user.request.UpdateUserRequest;
 import com.medsync.authservice.dto.user.response.UserResponse;
 import com.medsync.authservice.service.user.UserService;
 import com.medsync.commoncore.error.custom.DuplicateResourceException;
@@ -112,8 +112,8 @@ class UserControllerTest {
         @DisplayName("POST /api/v1/users returns 201 with a Location header")
         void createsUser() throws Exception {
             UUID id = UUID.randomUUID();
-            UserCreateRequest request = new UserCreateRequest("new@medsync.com", "raw-password", Role.USER);
-            when(userService.createUser(any(UserCreateRequest.class))).thenReturn(sampleResponse(id));
+            CreateUserRequest request = new CreateUserRequest("new@medsync.com", "raw-password", Role.USER);
+            when(userService.createUser(any(CreateUserRequest.class))).thenReturn(sampleResponse(id));
 
             mockMvc.perform(post("/api/v1/users")
                             .contentType("application/json")
@@ -125,7 +125,7 @@ class UserControllerTest {
         @Test
         @DisplayName("POST /api/v1/users returns 400 when email is invalid")
         void rejectsInvalidEmail() throws Exception {
-            UserCreateRequest request = new UserCreateRequest("not-an-email", "raw-password", Role.USER);
+            CreateUserRequest request = new CreateUserRequest("not-an-email", "raw-password", Role.USER);
 
             mockMvc.perform(post("/api/v1/users")
                             .contentType("application/json")
@@ -136,7 +136,7 @@ class UserControllerTest {
         @Test
         @DisplayName("POST /api/v1/users returns 400 when role is missing")
         void rejectsMissingRole() throws Exception {
-            UserCreateRequest request = new UserCreateRequest("new@medsync.com", "raw-password", null);
+            CreateUserRequest request = new CreateUserRequest("new@medsync.com", "raw-password", null);
 
             mockMvc.perform(post("/api/v1/users")
                             .contentType("application/json")
@@ -147,8 +147,8 @@ class UserControllerTest {
         @Test
         @DisplayName("POST /api/v1/users returns 409 when email already exists")
         void returns409WhenEmailExists() throws Exception {
-            UserCreateRequest request = new UserCreateRequest("dup@medsync.com", "raw-password", Role.USER);
-            when(userService.createUser(any(UserCreateRequest.class)))
+            CreateUserRequest request = new CreateUserRequest("dup@medsync.com", "raw-password", Role.USER);
+            when(userService.createUser(any(CreateUserRequest.class)))
                     .thenThrow(new DuplicateResourceException("Email already exists: dup@medsync.com"));
 
             mockMvc.perform(post("/api/v1/users")
@@ -165,8 +165,8 @@ class UserControllerTest {
         @DisplayName("PUT /api/v1/users/{id} returns 200 with updated user")
         void updatesUser() throws Exception {
             UUID id = UUID.randomUUID();
-            UserUpdateRequest request = new UserUpdateRequest("updated@medsync.com", null, Role.ADMIN);
-            when(userService.updateUser(eq(id), any(UserUpdateRequest.class)))
+            UpdateUserRequest request = new UpdateUserRequest("updated@medsync.com", null, Role.ADMIN);
+            when(userService.updateUser(eq(id), any(UpdateUserRequest.class)))
                     .thenReturn(new UserResponse(id, "updated@medsync.com", Role.ADMIN, UserStatus.ACTIVE));
 
             mockMvc.perform(put("/api/v1/users/{id}", id)
@@ -181,8 +181,8 @@ class UserControllerTest {
         @DisplayName("PUT /api/v1/users/{id} returns 404 when the user does not exist")
         void returns404WhenNotFound() throws Exception {
             UUID id = UUID.randomUUID();
-            UserUpdateRequest request = new UserUpdateRequest("updated@medsync.com", null, null);
-            when(userService.updateUser(eq(id), any(UserUpdateRequest.class)))
+            UpdateUserRequest request = new UpdateUserRequest("updated@medsync.com", null, null);
+            when(userService.updateUser(eq(id), any(UpdateUserRequest.class)))
                     .thenThrow(new ResourceNotFoundException("User not found with id: " + id));
 
             mockMvc.perform(put("/api/v1/users/{id}", id)
@@ -195,7 +195,7 @@ class UserControllerTest {
         @DisplayName("PUT /api/v1/users/{id} returns 400 when email is malformed")
         void rejectsInvalidEmail() throws Exception {
             UUID id = UUID.randomUUID();
-            UserUpdateRequest request = new UserUpdateRequest("not-an-email", null, null);
+            UpdateUserRequest request = new UpdateUserRequest("not-an-email", null, null);
 
             mockMvc.perform(put("/api/v1/users/{id}", id)
                             .contentType("application/json")

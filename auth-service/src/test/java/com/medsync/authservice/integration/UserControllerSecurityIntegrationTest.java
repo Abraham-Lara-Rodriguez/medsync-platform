@@ -3,7 +3,7 @@ package com.medsync.authservice.integration;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.medsync.authservice.domain.entity.User;
 import com.medsync.authservice.domain.enums.Role;
-import com.medsync.authservice.dto.user.request.UserCreateRequest;
+import com.medsync.authservice.dto.user.request.CreateUserRequest;
 import com.medsync.authservice.help.AuthTestHelper;
 import com.medsync.authservice.repository.user.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -122,7 +122,7 @@ class UserControllerSecurityIntegrationTest extends AbstractIntegrationTest {
                 PASSWORD
         );
 
-        UserCreateRequest request = new UserCreateRequest(
+        CreateUserRequest request = new CreateUserRequest(
                 "brand-new@medsync.com",
                 "raw-password",
                 Role.USER
@@ -147,7 +147,7 @@ class UserControllerSecurityIntegrationTest extends AbstractIntegrationTest {
                 PASSWORD
         );
 
-        UserCreateRequest request = new UserCreateRequest(
+        CreateUserRequest request = new CreateUserRequest(
                 "blocked@medsync.com",
                 "raw-password",
                 Role.USER

@@ -8,7 +8,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 @Schema(description = "Payload for creating a new user via admin.")
-public record UserCreateRequest(
+public record CreateUserRequest(
         @Email @NotBlank @Size(max = 100) @Schema(description = "User email address.", example = "abraham@example.com") String email,
 
         @Schema(description = "Raw password. Must meet security requirements.") @NotBlank String password,

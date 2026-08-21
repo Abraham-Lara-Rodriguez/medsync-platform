@@ -8,7 +8,7 @@ import jakarta.validation.constraints.Email;
  * Request body for updating an existing user.
  * Supports administrative resets and role changes.
  */
-public record UserUpdateRequest(
+public record UpdateUserRequest(
         @Schema(description = "New email address", example = "abraham@example.com")
         @Email
         String email,
