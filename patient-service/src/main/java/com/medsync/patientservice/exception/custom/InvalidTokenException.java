@@ -1,4 +1,4 @@
-package com.medsync.patientservice.exception.handler;
+package com.medsync.patientservice.exception.custom;
 
 import lombok.Getter;
 import org.springframework.http.HttpStatus;

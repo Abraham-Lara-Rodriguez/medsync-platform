@@ -3,6 +3,7 @@ package com.medsync.patientservice.exception.handler;
 import com.medsync.commoncore.error.dto.ProblemDetails;
 import com.medsync.commoncore.error.enums.ErrorCode;
 import com.medsync.commoncore.error.handler.AbstractGlobalExceptionHandler;
+import com.medsync.patientservice.exception.custom.InvalidTokenException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;

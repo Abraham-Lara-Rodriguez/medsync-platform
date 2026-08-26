@@ -1,6 +1,7 @@
 package com.medsync.patientservice.exception.handler;
 
 import com.medsync.commoncore.error.enums.ErrorCode;
+import com.medsync.patientservice.exception.custom.InvalidTokenException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
