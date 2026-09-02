@@ -68,7 +68,6 @@ services:
       timeout: 5s
       retries: 10
 
-
   # ==================== CONFIG SERVER ====================
 
   config-service:
@@ -133,7 +132,7 @@ services:
     container_name: api-gateway
     restart: unless-stopped
     environment:
-      GATEWAY_SERVER_PROFILES: ${GATEWAY_SERVER_PROFILES}
+      GATEWAY_SPRING_PROFILES: ${GATEWAY_SPRING_PROFILES}
       CONFIG_SERVER_HOSTNAME: ${CONFIG_SERVER_HOSTNAME}
       CONFIG_SERVER_PORT: ${CONFIG_SERVER_PORT}
       DISCOVERY_SERVER_HOSTNAME: ${DISCOVERY_SERVER_HOSTNAME}
@@ -172,7 +171,7 @@ services:
       AUTH_DB_PASSWORD: ${AUTH_DB_PASSWORD}
 
       AUTH_SERVER_PORT: ${AUTH_SERVER_PORT}
-      AUTH_SERVER_PROFILES: ${AUTH_SERVER_PROFILES}
+      AUTH_SPRING_PROFILES: ${AUTH_SPRING_PROFILES}
 
       AUTH_SERVER_SECRET_KEY: ${AUTH_SERVER_SECRET_KEY}
       AUTH_SERVER_ACCESS_TOKEN_EXPIRATION: ${AUTH_SERVER_ACCESS_TOKEN_EXPIRATION}
@@ -182,6 +181,7 @@ services:
 
       CONFIG_SERVER_HOSTNAME: ${CONFIG_SERVER_HOSTNAME}
       CONFIG_SERVER_PORT: ${CONFIG_SERVER_PORT}
+
       DISCOVERY_SERVER_HOSTNAME: ${DISCOVERY_SERVER_HOSTNAME}
       DISCOVERY_SERVER_PORT: ${DISCOVERY_SERVER_PORT}
 
@@ -230,6 +230,7 @@ services:
       CONFIG_SERVER_PORT: ${CONFIG_SERVER_PORT}
       DISCOVERY_SERVER_HOSTNAME: ${DISCOVERY_SERVER_HOSTNAME}
       DISCOVERY_SERVER_PORT: ${DISCOVERY_SERVER_PORT}
+      AUTH_SERVER_SECRET_KEY: ${AUTH_SERVER_SECRET_KEY}
       JAVA_OPTS: "-Xms256m -Xmx512m"
     ports:
       - "8002:8002"
@@ -246,6 +247,50 @@ services:
       - medsync-network
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:8002/actuator/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+
+  # ========================= APPOINTMENT SERVICE ====================
+
+  appointment-service:
+    build:
+      context: ..
+      dockerfile: appointment-service/Dockerfile
+    container_name: appointment-service
+    restart: unless-stopped
+    env_file:
+      - ./.env
+    environment:
+      APPOINTMENT_DB_URL: ${APPOINTMENT_DB_URL}
+      APPOINTMENT_DB_USERNAME: ${APPOINTMENT_DB_USERNAME}
+      APPOINTMENT_DB_PASSWORD: ${APPOINTMENT_DB_PASSWORD}
+      APPOINTMENT_SERVER_PORT: ${APPOINTMENT_SERVER_PORT}
+      APPOINTMENT_SPRING_PROFILES: ${APPOINTMENT_SPRING_PROFILES}
+      CONFIG_SERVER_HOSTNAME: ${CONFIG_SERVER_HOSTNAME}
+      CONFIG_SERVER_PORT: ${CONFIG_SERVER_PORT}
+      DISCOVERY_SERVER_HOSTNAME: ${DISCOVERY_SERVER_HOSTNAME}
+      DISCOVERY_SERVER_PORT: ${DISCOVERY_SERVER_PORT}
+      AUTH_SERVER_SECRET_KEY: ${AUTH_SERVER_SECRET_KEY}
+      JAVA_OPTS: "-Xms256m -Xmx512m"
+    ports:
+      - "8003:8003"
+    depends_on:
+      appointment-service-postgres:
+        condition: service_healthy
+      config-service:
+        condition: service_healthy
+      discovery-service:
+        condition: service_healthy
+      auth-service:
+        condition: service_healthy
+      patient-service:
+        condition: service_healthy
+    networks:
+      - medsync-network
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8003/actuator/health" ]
       interval: 30s
       timeout: 10s
       retries: 5

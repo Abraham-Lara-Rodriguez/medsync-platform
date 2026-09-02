@@ -13,6 +13,7 @@ COPY api-gateway/pom.xml api-gateway/
 COPY patient-service/pom.xml patient-service/
 COPY common-security/pom.xml common-security/
 COPY common-core/pom.xml common-core/
+COPY appointment-service/pom.xml appointment-service/
 
 # Pre-download dependencies (cache layer, reused if pom.xml unchanged)
 RUN mvn -f /app/pom.xml dependency:resolve -pl discovery-service -am -q || true
