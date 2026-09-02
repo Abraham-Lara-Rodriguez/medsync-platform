@@ -24,19 +24,19 @@ public class PatientController {
     private final PatientService patientService;
 
     @GetMapping
-    @PreAuthorize("hasAuthority('USER_READ')")
+    @PreAuthorize("hasAuthority('PATIENT_READ')")
     public ResponseEntity<Page<PatientResponse>> getAllPatients(@PageableDefault(size = 20, sort = "firstName") Pageable pageable) {
         return ResponseEntity.ok(patientService.getAllPatients(pageable));
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAuthority('USER_READ')")
+    @PreAuthorize("hasAuthority('PATIENT_READ')")
     public ResponseEntity<PatientResponse> getPatientById(@PathVariable UUID id) {
         return ResponseEntity.ok(patientService.getPatientById(id));
     }
 
     @PostMapping
-    @PreAuthorize("hasAuthority('USER_CREATE')")
+    @PreAuthorize("hasAuthority('PATIENT_CREATE')")
     public ResponseEntity<PatientResponse> createPatient(@Valid @RequestBody CreatePatientRequest request) {
         PatientResponse patient = patientService.createPatient(request);
         return ResponseEntity.created(ServletUriComponentsBuilder.fromCurrentRequest()
@@ -46,13 +46,13 @@ public class PatientController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('USER_UPDATE')")
+    @PreAuthorize("hasAuthority('PATIENT_UPDATE')")
     public ResponseEntity<PatientResponse> updatePatient(@PathVariable UUID id, @Valid @RequestBody UpdatePatientRequest request) {
         return ResponseEntity.ok(patientService.updatePatient(id, request));
     }
 
     @PatchMapping("/deactivate/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('PATIENT_DEACTIVATE')")
     public ResponseEntity<Void> deactivatePatient(@PathVariable UUID id) {
         patientService.deactivatePatient(id);
         return ResponseEntity.noContent().build();
