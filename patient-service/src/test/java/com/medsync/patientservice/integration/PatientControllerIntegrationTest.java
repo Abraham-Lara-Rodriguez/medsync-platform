@@ -62,10 +62,10 @@ class PatientControllerIntegrationTest extends AbstractIntegrationTest {
     }
 
     @Test
-    @DisplayName("GET /patients returns persisted patients with USER_READ")
+    @DisplayName("GET /patients returns persisted patients with PATIENT_READ")
     void getAllPatientsAllowed() throws Exception {
         mockMvc.perform(get("/api/v1/patients")
-                        .header("Authorization", bearerToken(USER_EMAIL, List.of("ROLE_USER", "USER_READ")))
+                        .header("Authorization", bearerToken(USER_EMAIL, List.of("ROLE_USER", "PATIENT_READ")))
                         .param("page", "0")
                         .param("size", "20"))
                 .andExpect(status().isOk())
@@ -75,7 +75,7 @@ class PatientControllerIntegrationTest extends AbstractIntegrationTest {
     }
 
     @Test
-    @DisplayName("GET /patients without USER_READ returns 403")
+    @DisplayName("GET /patients without PATIENT_READ returns 403")
     void getAllPatientsForbiddenWithoutAuthority() throws Exception {
         mockMvc.perform(get("/api/v1/patients")
                         .header("Authorization", bearerToken(USER_EMAIL, List.of("ROLE_USER"))))
@@ -83,10 +83,10 @@ class PatientControllerIntegrationTest extends AbstractIntegrationTest {
     }
 
     @Test
-    @DisplayName("GET /patients/{id} returns patient")
+    @DisplayName("GET /patients/{id} returns patient with PATIENT_READ")
     void getPatientById() throws Exception {
         mockMvc.perform(get("/api/v1/patients/{id}", patientId)
-                        .header("Authorization", bearerToken(USER_EMAIL, List.of("ROLE_USER", "USER_READ"))))
+                        .header("Authorization", bearerToken(USER_EMAIL, List.of("ROLE_USER", "PATIENT_READ"))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(patientId.toString()))
                 .andExpect(jsonPath("$.firstName").value("Juan"))
@@ -97,19 +97,19 @@ class PatientControllerIntegrationTest extends AbstractIntegrationTest {
     @DisplayName("GET /patients/{id} returns 404 when patient does not exist")
     void getPatientByIdNotFound() throws Exception {
         mockMvc.perform(get("/api/v1/patients/{id}", UUID.randomUUID())
-                        .header("Authorization", bearerToken(USER_EMAIL, List.of("ROLE_USER", "USER_READ"))))
+                        .header("Authorization", bearerToken(USER_EMAIL, List.of("ROLE_USER", "PATIENT_READ"))))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value("RESOURCE_NOT_FOUND"))
                 .andExpect(jsonPath("$.type").value("https://patient-service/errors/resource-not-found"));
     }
 
     @Test
-    @DisplayName("POST /patients creates a patient")
+    @DisplayName("POST /patients creates a patient with PATIENT_CREATE")
     void createPatient() throws Exception {
         String body = createPatientJson("Ana", "ana@medsync.test", "87654321", "+573009998877");
 
         mockMvc.perform(post("/api/v1/patients")
-                        .header("Authorization", bearerToken(USER_EMAIL, List.of("ROLE_USER", "USER_CREATE")))
+                        .header("Authorization", bearerToken(USER_EMAIL, List.of("ROLE_USER", "PATIENT_CREATE")))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
                 .andExpect(status().isCreated())
@@ -121,10 +121,10 @@ class PatientControllerIntegrationTest extends AbstractIntegrationTest {
     }
 
     @Test
-    @DisplayName("POST /patients rejects duplicate email")
+    @DisplayName("POST /patients rejects duplicate email with PATIENT_CREATE")
     void createPatientDuplicateEmail() throws Exception {
         mockMvc.perform(post("/api/v1/patients")
-                        .header("Authorization", bearerToken(USER_EMAIL, List.of("ROLE_USER", "USER_CREATE")))
+                        .header("Authorization", bearerToken(USER_EMAIL, List.of("ROLE_USER", "PATIENT_CREATE")))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(createPatientJson("Other", "juan@medsync.test", "87654321", "+573009998877")))
                 .andExpect(status().isConflict())
@@ -136,7 +136,7 @@ class PatientControllerIntegrationTest extends AbstractIntegrationTest {
     @DisplayName("POST /patients rejects malformed JSON")
     void createPatientMalformedJson() throws Exception {
         mockMvc.perform(post("/api/v1/patients")
-                        .header("Authorization", bearerToken(USER_EMAIL, List.of("ROLE_USER", "USER_CREATE")))
+                        .header("Authorization", bearerToken(USER_EMAIL, List.of("ROLE_USER", "PATIENT_CREATE")))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{"))
                 .andExpect(status().isBadRequest())
@@ -148,7 +148,7 @@ class PatientControllerIntegrationTest extends AbstractIntegrationTest {
     @DisplayName("POST /patients rejects invalid DTO")
     void createPatientValidationError() throws Exception {
         mockMvc.perform(post("/api/v1/patients")
-                        .header("Authorization", bearerToken(USER_EMAIL, List.of("ROLE_USER", "USER_CREATE")))
+                        .header("Authorization", bearerToken(USER_EMAIL, List.of("ROLE_USER", "PATIENT_CREATE")))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -169,10 +169,10 @@ class PatientControllerIntegrationTest extends AbstractIntegrationTest {
     }
 
     @Test
-    @DisplayName("PUT /patients/{id} updates persisted patient")
+    @DisplayName("PUT /patients/{id} updates persisted patient with PATIENT_UPDATE")
     void updatePatient() throws Exception {
         mockMvc.perform(put("/api/v1/patients/{id}", patientId)
-                        .header("Authorization", bearerToken(USER_EMAIL, List.of("ROLE_USER", "USER_UPDATE")))
+                        .header("Authorization", bearerToken(USER_EMAIL, List.of("ROLE_USER", "PATIENT_UPDATE")))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(updatePatientJson()))
                 .andExpect(status().isOk())
@@ -186,7 +186,7 @@ class PatientControllerIntegrationTest extends AbstractIntegrationTest {
     }
 
     @Test
-    @DisplayName("PUT /patients/{id} rejects duplicate document")
+    @DisplayName("PUT /patients/{id} rejects duplicate document with PATIENT_UPDATE")
     void updatePatientDuplicateDocument() throws Exception {
         Patient second = Patient.create(
                 "Ana", "Gómez", "87654321", Gender.FEMALE,
@@ -196,7 +196,7 @@ class PatientControllerIntegrationTest extends AbstractIntegrationTest {
         patientRepository.saveAndFlush(second);
 
         mockMvc.perform(put("/api/v1/patients/{id}", patientId)
-                        .header("Authorization", bearerToken(USER_EMAIL, List.of("ROLE_USER", "USER_UPDATE")))
+                        .header("Authorization", bearerToken(USER_EMAIL, List.of("ROLE_USER", "PATIENT_UPDATE")))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(updatePatientJson("87654321", "juan.updated2@medsync.test", "+573001111111")))
                 .andExpect(status().isConflict())
@@ -204,10 +204,10 @@ class PatientControllerIntegrationTest extends AbstractIntegrationTest {
     }
 
     @Test
-    @DisplayName("PATCH /patients/deactivate/{id} deactivates only for ADMIN")
+    @DisplayName("PATCH /patients/deactivate/{id} deactivates with PATIENT_DEACTIVATE authority")
     void deactivatePatientAllowedForAdmin() throws Exception {
         mockMvc.perform(patch("/api/v1/patients/deactivate/{id}", patientId)
-                        .header("Authorization", bearerToken(ADMIN_EMAIL, List.of("ROLE_ADMIN"))))
+                        .header("Authorization", bearerToken(ADMIN_EMAIL, List.of("ROLE_ADMIN", "PATIENT_DEACTIVATE"))))
                 .andExpect(status().isNoContent());
 
         org.junit.jupiter.api.Assertions.assertEquals(
@@ -217,7 +217,7 @@ class PatientControllerIntegrationTest extends AbstractIntegrationTest {
     }
 
     @Test
-    @DisplayName("PATCH /patients/deactivate/{id} returns 403 for USER")
+    @DisplayName("PATCH /patients/deactivate/{id} returns 403 without PATIENT_DEACTIVATE")
     void deactivatePatientForbiddenForUser() throws Exception {
         mockMvc.perform(patch("/api/v1/patients/deactivate/{id}", patientId)
                         .header("Authorization", bearerToken(USER_EMAIL, List.of("ROLE_USER"))))
@@ -243,7 +243,7 @@ class PatientControllerIntegrationTest extends AbstractIntegrationTest {
     @DisplayName("Refresh token cannot be used as access token")
     void refreshTokenIsRejected() throws Exception {
         mockMvc.perform(get("/api/v1/patients")
-                        .header("Authorization", bearerToken(USER_EMAIL, List.of("ROLE_USER", "USER_READ"), "refresh")))
+                        .header("Authorization", bearerToken(USER_EMAIL, List.of("ROLE_USER", "PATIENT_READ"), "refresh")))
                 .andExpect(status().isUnauthorized());
     }
 
@@ -251,7 +251,7 @@ class PatientControllerIntegrationTest extends AbstractIntegrationTest {
     @DisplayName("GET /patients rejects page size above service limit")
     void getAllPatientsRejectsOversizedPage() throws Exception {
         mockMvc.perform(get("/api/v1/patients")
-                        .header("Authorization", bearerToken(USER_EMAIL, List.of("ROLE_USER", "USER_READ")))
+                        .header("Authorization", bearerToken(USER_EMAIL, List.of("ROLE_USER", "PATIENT_READ")))
                         .param("size", "101"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("INVALID_PARAMETER"))
