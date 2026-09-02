@@ -14,22 +14,43 @@ class RoleTest {
     }
 
     @Test
-    @DisplayName("USER.asAuthority() returns ROLE_USER")
+    @DisplayName("RECEPTIONIST.asAuthority() returns ROLE_RECEPTIONIST")
     void userAuthority() {
-        assertThat(Role.USER.asAuthority()).isEqualTo("ROLE_USER");
+        assertThat(Role.RECEPTIONIST.asAuthority()).isEqualTo("ROLE_RECEPTIONIST");
     }
 
     @Test
     @DisplayName("ADMIN has the full set of administrative permissions")
     void adminPermissions() {
         assertThat(Role.ADMIN.getPermissions()).containsExactlyInAnyOrder(
-                Permission.ADMIN_CREATE, Permission.ADMIN_READ, Permission.ADMIN_UPDATE, Permission.ADMIN_DELETE);
+                Permission.USER_READ, Permission.USER_CREATE,
+                Permission.USER_UPDATE, Permission.USER_DELETE,
+
+                Permission.PATIENT_CREATE, Permission.PATIENT_READ,
+                Permission.PATIENT_UPDATE, Permission.PATIENT_DELETE,
+                Permission.PATIENT_DEACTIVATE,
+
+                Permission.APPOINTMENT_CREATE, Permission.APPOINTMENT_READ,
+                Permission.APPOINTMENT_UPDATE, Permission.APPOINTMENT_CANCEL,
+
+                Permission.DOCTOR_CREATE, Permission.DOCTOR_READ,
+                Permission.DOCTOR_UPDATE);
     }
 
     @Test
-    @DisplayName("USER has the standard user permissions")
+    @DisplayName("RECEPTIONIST has the standard user permissions")
     void userPermissions() {
-        assertThat(Role.USER.getPermissions()).containsExactlyInAnyOrder(
-                Permission.USER_READ, Permission.USER_CREATE, Permission.USER_UPDATE, Permission.USER_DELETE);
+        assertThat(Role.RECEPTIONIST.getPermissions()).containsExactlyInAnyOrder(
+                Permission.PATIENT_READ,
+                Permission.PATIENT_CREATE,
+                Permission.PATIENT_UPDATE,
+
+                Permission.APPOINTMENT_READ,
+                Permission.APPOINTMENT_CREATE,
+                Permission.APPOINTMENT_UPDATE,
+                Permission.APPOINTMENT_CANCEL,
+
+                Permission.DOCTOR_READ
+        );
     }
 }

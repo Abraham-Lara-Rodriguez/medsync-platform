@@ -34,8 +34,8 @@ class UserRepositoryIntegrationTest extends AbstractIntegrationTest {
     void seed() {
         userRepository.deleteAll();
         userRepository.save(User.create("abraham@medsync.com", "pwd", Role.ADMIN));
-        userRepository.save(User.create("sarah@medsync.com", "pwd", Role.USER));
-        User inactive = User.create("inactive@medsync.com", "pwd", Role.USER);
+        userRepository.save(User.create("sarah@medsync.com", "pwd", Role.RECEPTIONIST));
+        User inactive = User.create("inactive@medsync.com", "pwd", Role.RECEPTIONIST);
         inactive.changeStatus(UserStatus.INACTIVE);
         userRepository.save(inactive);
     }
@@ -111,7 +111,7 @@ class UserRepositoryIntegrationTest extends AbstractIntegrationTest {
         @Test
         @DisplayName("combines multiple filters with AND semantics")
         void combinesFiltersWithAnd() {
-            UserFilter filter = new UserFilter("sarah", Role.USER, UserStatus.ACTIVE);
+            UserFilter filter = new UserFilter("sarah", Role.RECEPTIONIST, UserStatus.ACTIVE);
 
             Page<User> result = userRepository.findAll(UserSpecifications.withFilters(filter), Pageable.unpaged());
 

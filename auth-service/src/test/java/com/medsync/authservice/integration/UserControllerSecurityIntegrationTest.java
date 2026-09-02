@@ -59,7 +59,7 @@ class UserControllerSecurityIntegrationTest extends AbstractIntegrationTest {
         User user = User.create(
                 USER_EMAIL,
                 passwordEncoder.encode(PASSWORD),
-                Role.USER
+                Role.RECEPTIONIST
         );
 
         userRepository.save(admin);
@@ -67,7 +67,7 @@ class UserControllerSecurityIntegrationTest extends AbstractIntegrationTest {
     }
 
     @Test
-    @DisplayName("GET /api/v1/users with ADMIN_READ authority returns 200")
+    @DisplayName("GET /api/v1/users with USER_READ authority returns 200")
     void listUsersAllowedWithAdminRead() throws Exception {
 
         String accessToken = AuthTestHelper.obtainAccessToken(
@@ -82,7 +82,7 @@ class UserControllerSecurityIntegrationTest extends AbstractIntegrationTest {
     }
 
     @Test
-    @DisplayName("GET /api/v1/users without ADMIN_READ authority returns 403")
+    @DisplayName("GET /api/v1/users without USER_READ authority returns 403")
     void listUsersForbiddenWithoutAdminRead() throws Exception {
 
         String accessToken = AuthTestHelper.obtainAccessToken(
@@ -97,7 +97,7 @@ class UserControllerSecurityIntegrationTest extends AbstractIntegrationTest {
     }
 
     @Test
-    @DisplayName("GET /api/v1/users/{id} without ADMIN_READ authority returns 403")
+    @DisplayName("GET /api/v1/users/{id} without USER_READ authority returns 403")
     void getUserByIdForbiddenWithoutAdminRead() throws Exception {
 
         String accessToken = AuthTestHelper.obtainAccessToken(
@@ -112,7 +112,7 @@ class UserControllerSecurityIntegrationTest extends AbstractIntegrationTest {
     }
 
     @Test
-    @DisplayName("POST /api/v1/users with ADMIN_CREATE authority returns 201")
+    @DisplayName("POST /api/v1/users with USER_CREATE authority returns 201")
     void createUserAllowedWithAdminCreate() throws Exception {
 
         String accessToken = AuthTestHelper.obtainAccessToken(
@@ -125,7 +125,7 @@ class UserControllerSecurityIntegrationTest extends AbstractIntegrationTest {
         CreateUserRequest request = new CreateUserRequest(
                 "brand-new@medsync.com",
                 "raw-password",
-                Role.USER
+                Role.RECEPTIONIST
         );
 
         mockMvc.perform(
@@ -137,7 +137,7 @@ class UserControllerSecurityIntegrationTest extends AbstractIntegrationTest {
     }
 
     @Test
-    @DisplayName("POST /api/v1/users without ADMIN_CREATE authority returns 403")
+    @DisplayName("POST /api/v1/users without USER_CREATE authority returns 403")
     void createUserForbiddenWithoutAdminCreate() throws Exception {
 
         String accessToken = AuthTestHelper.obtainAccessToken(
@@ -150,7 +150,7 @@ class UserControllerSecurityIntegrationTest extends AbstractIntegrationTest {
         CreateUserRequest request = new CreateUserRequest(
                 "blocked@medsync.com",
                 "raw-password",
-                Role.USER
+                Role.RECEPTIONIST
         );
 
         mockMvc.perform(

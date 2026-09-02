@@ -44,7 +44,7 @@ class AuthFlowIntegrationTest extends AbstractIntegrationTest {
         userRepository.deleteAll();
         User admin = User.create("admin@medsync.com", passwordEncoder.encode("Sup3rSecret!"), Role.ADMIN);
         userRepository.save(admin);
-        User inactive = User.create("inactive@medsync.com", passwordEncoder.encode("Sup3rSecret!"), Role.USER);
+        User inactive = User.create("inactive@medsync.com", passwordEncoder.encode("Sup3rSecret!"), Role.RECEPTIONIST);
         inactive.changeStatus(UserStatus.INACTIVE);
         userRepository.save(inactive);
     }

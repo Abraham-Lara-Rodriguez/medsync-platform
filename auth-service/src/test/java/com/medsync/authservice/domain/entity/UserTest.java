@@ -12,18 +12,18 @@ class UserTest {
     @Test
     @DisplayName("create() builds a user with ACTIVE status and given attributes")
     void createBuildsActiveUser() {
-        User user = User.create("new@medsync.com", "encoded-password", Role.USER);
+        User user = User.create("new@medsync.com", "encoded-password", Role.RECEPTIONIST);
 
         assertThat(user.getEmail()).isEqualTo("new@medsync.com");
         assertThat(user.getPassword()).isEqualTo("encoded-password");
-        assertThat(user.getRole()).isEqualTo(Role.USER);
+        assertThat(user.getRole()).isEqualTo(Role.RECEPTIONIST);
         assertThat(user.getStatus()).isEqualTo(UserStatus.ACTIVE);
     }
 
     @Test
     @DisplayName("changeEmail mutates the email")
     void changeEmailMutatesState() {
-        User user = User.create("old@medsync.com", "pwd", Role.USER);
+        User user = User.create("old@medsync.com", "pwd", Role.RECEPTIONIST);
 
         user.changeEmail("new@medsync.com");
 
@@ -33,7 +33,7 @@ class UserTest {
     @Test
     @DisplayName("changePassword mutates the password")
     void changePasswordMutatesState() {
-        User user = User.create("a@medsync.com", "old-encoded", Role.USER);
+        User user = User.create("a@medsync.com", "old-encoded", Role.RECEPTIONIST);
 
         user.changePassword("new-encoded");
 
@@ -43,7 +43,7 @@ class UserTest {
     @Test
     @DisplayName("changeRole mutates the role")
     void changeRoleMutatesState() {
-        User user = User.create("a@medsync.com", "pwd", Role.USER);
+        User user = User.create("a@medsync.com", "pwd", Role.RECEPTIONIST);
 
         user.changeRole(Role.ADMIN);
 
@@ -53,7 +53,7 @@ class UserTest {
     @Test
     @DisplayName("changeStatus mutates the status")
     void changeStatusMutatesState() {
-        User user = User.create("a@medsync.com", "pwd", Role.USER);
+        User user = User.create("a@medsync.com", "pwd", Role.RECEPTIONIST);
 
         user.changeStatus(UserStatus.INACTIVE);
 

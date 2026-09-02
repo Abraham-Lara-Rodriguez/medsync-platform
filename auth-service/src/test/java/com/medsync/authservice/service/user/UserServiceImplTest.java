@@ -63,7 +63,7 @@ class UserServiceImplTest {
         @DisplayName("maps the repository page through the mapper")
         void mapsRepositoryPage() {
             Pageable pageable = Pageable.unpaged();
-            User user = existingUser("a@medsync.com", Role.USER);
+            User user = existingUser("a@medsync.com", Role.RECEPTIONIST);
             UserResponse response = new UserResponse(user.getId(), user.getEmail(), user.getRole(), user.getStatus());
 
             when(userRepository.findAll(pageable)).thenReturn(new PageImpl<>(List.of(user)));
@@ -105,7 +105,7 @@ class UserServiceImplTest {
         @DisplayName("returns the mapped user when found")
         void returnsUserWhenFound() {
             UUID id = UUID.randomUUID();
-            User user = existingUser("a@medsync.com", Role.USER);
+            User user = existingUser("a@medsync.com", Role.RECEPTIONIST);
             UserResponse response = new UserResponse(id, user.getEmail(), user.getRole(), user.getStatus());
 
             when(userRepository.findById(id)).thenReturn(Optional.of(user));
@@ -135,8 +135,8 @@ class UserServiceImplTest {
         @Test
         @DisplayName("creates and saves the user when the email is not taken")
         void createsUserWhenEmailAvailable() {
-            CreateUserRequest request = new CreateUserRequest("new@medsync.com", "raw-password", Role.USER);
-            User savedUser = existingUser("new@medsync.com", Role.USER);
+            CreateUserRequest request = new CreateUserRequest("new@medsync.com", "raw-password", Role.RECEPTIONIST);
+            User savedUser = existingUser("new@medsync.com", Role.RECEPTIONIST);
             UserResponse response = new UserResponse(savedUser.getId(), savedUser.getEmail(), savedUser.getRole(), savedUser.getStatus());
 
             when(userRepository.existsByEmail("new@medsync.com")).thenReturn(false);
@@ -152,13 +152,13 @@ class UserServiceImplTest {
             verify(userRepository).save(captor.capture());
             assertThat(captor.getValue().getEmail()).isEqualTo("new@medsync.com");
             assertThat(captor.getValue().getPassword()).isEqualTo("encoded-password");
-            assertThat(captor.getValue().getRole()).isEqualTo(Role.USER);
+            assertThat(captor.getValue().getRole()).isEqualTo(Role.RECEPTIONIST);
         }
 
         @Test
         @DisplayName("throws DuplicateResourceException and never saves when email already exists")
         void throwsWhenEmailAlreadyExists() {
-            CreateUserRequest request = new CreateUserRequest("dup@medsync.com", "raw-password", Role.USER);
+            CreateUserRequest request = new CreateUserRequest("dup@medsync.com", "raw-password", Role.RECEPTIONIST);
             when(userRepository.existsByEmail("dup@medsync.com")).thenReturn(true);
 
             assertThatThrownBy(() -> userService.createUser(request))
@@ -192,7 +192,7 @@ class UserServiceImplTest {
         @DisplayName("throws DuplicateResourceException when changing to an email already used by another user")
         void throwsWhenNewEmailAlreadyExists() {
             UUID id = UUID.randomUUID();
-            User user = existingUser("old@medsync.com", Role.USER);
+            User user = existingUser("old@medsync.com", Role.RECEPTIONIST);
             when(userRepository.findById(id)).thenReturn(Optional.of(user));
             when(userRepository.existsByEmail("taken@medsync.com")).thenReturn(true);
 
@@ -209,7 +209,7 @@ class UserServiceImplTest {
         @DisplayName("does not check email availability when the email is unchanged")
         void doesNotCheckAvailabilityWhenEmailUnchanged() {
             UUID id = UUID.randomUUID();
-            User user = existingUser("same@medsync.com", Role.USER);
+            User user = existingUser("same@medsync.com", Role.RECEPTIONIST);
             when(userRepository.findById(id)).thenReturn(Optional.of(user));
             when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
             when(userMapper.toResponse(any(User.class))).thenReturn(
@@ -226,7 +226,7 @@ class UserServiceImplTest {
         @DisplayName("updates the email when it changes and is available")
         void updatesEmailWhenAvailable() {
             UUID id = UUID.randomUUID();
-            User user = existingUser("old@medsync.com", Role.USER);
+            User user = existingUser("old@medsync.com", Role.RECEPTIONIST);
             when(userRepository.findById(id)).thenReturn(Optional.of(user));
             when(userRepository.existsByEmail("new@medsync.com")).thenReturn(false);
             when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
@@ -246,7 +246,7 @@ class UserServiceImplTest {
         @DisplayName("encodes and updates the password when provided")
         void updatesPasswordWhenProvided() {
             UUID id = UUID.randomUUID();
-            User user = existingUser("same@medsync.com", Role.USER);
+            User user = existingUser("same@medsync.com", Role.RECEPTIONIST);
             when(userRepository.findById(id)).thenReturn(Optional.of(user));
             when(passwordEncoder.encode("new-raw-password")).thenReturn("new-encoded-password");
             when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
@@ -266,7 +266,7 @@ class UserServiceImplTest {
         @DisplayName("does not touch the password when it is null")
         void doesNotChangePasswordWhenNull() {
             UUID id = UUID.randomUUID();
-            User user = existingUser("same@medsync.com", Role.USER);
+            User user = existingUser("same@medsync.com", Role.RECEPTIONIST);
             String originalPassword = user.getPassword();
             when(userRepository.findById(id)).thenReturn(Optional.of(user));
             when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
@@ -285,7 +285,7 @@ class UserServiceImplTest {
         @DisplayName("updates the role when it changes and is not null")
         void updatesRoleWhenChanged() {
             UUID id = UUID.randomUUID();
-            User user = existingUser("same@medsync.com", Role.USER);
+            User user = existingUser("same@medsync.com", Role.RECEPTIONIST);
             when(userRepository.findById(id)).thenReturn(Optional.of(user));
             when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
             when(userMapper.toResponse(any(User.class))).thenAnswer(inv -> {
@@ -304,7 +304,7 @@ class UserServiceImplTest {
         @DisplayName("keeps the role unchanged when the request role is null")
         void keepsRoleWhenRequestRoleIsNull() {
             UUID id = UUID.randomUUID();
-            User user = existingUser("same@medsync.com", Role.USER);
+            User user = existingUser("same@medsync.com", Role.RECEPTIONIST);
             when(userRepository.findById(id)).thenReturn(Optional.of(user));
             when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
             when(userMapper.toResponse(any(User.class))).thenAnswer(inv -> {
@@ -316,14 +316,14 @@ class UserServiceImplTest {
 
             UserResponse result = userService.updateUser(id, request);
 
-            assertThat(result.role()).isEqualTo(Role.USER);
+            assertThat(result.role()).isEqualTo(Role.RECEPTIONIST);
         }
 
         @Test
         @DisplayName("keeps the role unchanged when the request role equals the current role")
         void keepsRoleWhenRequestRoleEqualsCurrent() {
             UUID id = UUID.randomUUID();
-            User user = existingUser("same@medsync.com", Role.USER);
+            User user = existingUser("same@medsync.com", Role.RECEPTIONIST);
             when(userRepository.findById(id)).thenReturn(Optional.of(user));
             when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
             when(userMapper.toResponse(any(User.class))).thenAnswer(inv -> {
@@ -331,11 +331,11 @@ class UserServiceImplTest {
                 return new UserResponse(u.getId(), u.getEmail(), u.getRole(), u.getStatus());
             });
 
-            UpdateUserRequest request = new UpdateUserRequest("same@medsync.com", null, Role.USER);
+            UpdateUserRequest request = new UpdateUserRequest("same@medsync.com", null, Role.RECEPTIONIST);
 
             UserResponse result = userService.updateUser(id, request);
 
-            assertThat(result.role()).isEqualTo(Role.USER);
+            assertThat(result.role()).isEqualTo(Role.RECEPTIONIST);
         }
     }
 }

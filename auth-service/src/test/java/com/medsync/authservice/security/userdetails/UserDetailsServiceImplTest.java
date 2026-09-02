@@ -52,13 +52,18 @@ class UserDetailsServiceImplTest {
         Set<String> authorities = details.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.toSet());
-        assertThat(authorities).contains("ROLE_ADMIN", "ADMIN_CREATE", "ADMIN_READ", "ADMIN_UPDATE", "ADMIN_DELETE");
+        assertThat(authorities).contains(
+                "USER_READ",
+                "USER_CREATE",
+                "USER_UPDATE",
+                "USER_DELETE"
+        );
     }
 
     @Test
     @DisplayName("returns disabled and locked UserDetails for an INACTIVE user")
     void returnsDisabledUserDetailsForInactiveUser() {
-        User user = User.create("inactive@medsync.com", "encoded-pwd", Role.USER);
+        User user = User.create("inactive@medsync.com", "encoded-pwd", Role.RECEPTIONIST);
         user.changeStatus(com.medsync.authservice.domain.enums.UserStatus.INACTIVE);
         when(userRepository.findByEmail("inactive@medsync.com")).thenReturn(Optional.of(user));
 
@@ -69,9 +74,9 @@ class UserDetailsServiceImplTest {
     }
 
     @Test
-    @DisplayName("maps USER role permissions and authority correctly")
+    @DisplayName("maps RECEPTIONIST role permissions and authority correctly")
     void mapsUserRolePermissions() {
-        User user = User.create("user@medsync.com", "encoded-pwd", Role.USER);
+        User user = User.create("user@medsync.com", "encoded-pwd", Role.RECEPTIONIST);
         when(userRepository.findByEmail("user@medsync.com")).thenReturn(Optional.of(user));
 
         UserDetails details = service.loadUserByUsername("user@medsync.com");
@@ -80,7 +85,16 @@ class UserDetailsServiceImplTest {
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.toSet());
         assertThat(authorities).containsExactlyInAnyOrder(
-                "ROLE_USER", "USER_READ", "USER_CREATE", "USER_UPDATE", "USER_DELETE");
+                "ROLE_RECEPTIONIST",
+                "PATIENT_READ",
+                "PATIENT_CREATE",
+                "PATIENT_UPDATE",
+                "APPOINTMENT_READ",
+                "APPOINTMENT_CREATE",
+                "APPOINTMENT_UPDATE",
+                "APPOINTMENT_CANCEL",
+                "DOCTOR_READ"
+        );
     }
 
     @Test

@@ -48,7 +48,7 @@ class UserControllerTest {
     private UserService userService;
 
     private static UserResponse sampleResponse(UUID id) {
-        return new UserResponse(id, "user@medsync.com", Role.USER, UserStatus.ACTIVE);
+        return new UserResponse(id, "user@medsync.com", Role.RECEPTIONIST, UserStatus.ACTIVE);
     }
 
     @Test
@@ -68,9 +68,9 @@ class UserControllerTest {
         UUID id = UUID.randomUUID();
         when(userService.search(any(), any())).thenReturn(new PageImpl<>(List.of(sampleResponse(id))));
 
-        mockMvc.perform(get("/api/v1/users/search").param("role", "USER"))
+        mockMvc.perform(get("/api/v1/users/search").param("role", "RECEPTIONIST"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content[0].role").value("USER"));
+                .andExpect(jsonPath("$.content[0].role").value("RECEPTIONIST"));
     }
 
     @Nested
@@ -112,7 +112,7 @@ class UserControllerTest {
         @DisplayName("POST /api/v1/users returns 201 with a Location header")
         void createsUser() throws Exception {
             UUID id = UUID.randomUUID();
-            CreateUserRequest request = new CreateUserRequest("new@medsync.com", "raw-password", Role.USER);
+            CreateUserRequest request = new CreateUserRequest("new@medsync.com", "raw-password", Role.RECEPTIONIST);
             when(userService.createUser(any(CreateUserRequest.class))).thenReturn(sampleResponse(id));
 
             mockMvc.perform(post("/api/v1/users")
@@ -125,7 +125,7 @@ class UserControllerTest {
         @Test
         @DisplayName("POST /api/v1/users returns 400 when email is invalid")
         void rejectsInvalidEmail() throws Exception {
-            CreateUserRequest request = new CreateUserRequest("not-an-email", "raw-password", Role.USER);
+            CreateUserRequest request = new CreateUserRequest("not-an-email", "raw-password", Role.RECEPTIONIST);
 
             mockMvc.perform(post("/api/v1/users")
                             .contentType("application/json")
@@ -147,7 +147,7 @@ class UserControllerTest {
         @Test
         @DisplayName("POST /api/v1/users returns 409 when email already exists")
         void returns409WhenEmailExists() throws Exception {
-            CreateUserRequest request = new CreateUserRequest("dup@medsync.com", "raw-password", Role.USER);
+            CreateUserRequest request = new CreateUserRequest("dup@medsync.com", "raw-password", Role.RECEPTIONIST);
             when(userService.createUser(any(CreateUserRequest.class)))
                     .thenThrow(new DuplicateResourceException("Email already exists: dup@medsync.com"));
 
