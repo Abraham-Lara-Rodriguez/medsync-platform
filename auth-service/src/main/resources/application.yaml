@@ -3,7 +3,7 @@ spring:
     name: auth-service
 
   profiles:
-    active: ${AUTH_SERVER_PROFILES:dev}
+    active: ${AUTH_SPRING_PROFILES:dev}
 
   config:
     import: optional:configserver:http://${CONFIG_SERVER_HOSTNAME:localhost}:${CONFIG_SERVER_PORT:8888}

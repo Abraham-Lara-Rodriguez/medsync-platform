@@ -2,17 +2,6 @@ spring:
   devtools:
     add-properties: false
 
-  datasource:
-    url: ${AUTH_DB_URL}
-    username: ${AUTH_DB_USERNAME}
-    password: ${AUTH_DB_PASSWORD}
-    driver-class-name: org.postgresql.Driver
-
-  jpa:
-    show-sql: false
-    hibernate:
-      ddl-auto: update
-
 eureka:
   instance:
     prefer-ip-address: true

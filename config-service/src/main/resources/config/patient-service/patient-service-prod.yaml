@@ -13,3 +13,10 @@ spring:
     enabled: true
     locations: classpath:db/migration
     baseline-on-migrate: true
+
+springdoc:
+  api-docs:
+    enabled: false
+
+  swagger-ui:
+    enabled: false

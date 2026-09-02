@@ -24,6 +24,7 @@
         <module>auth-service</module>
         <module>common-security</module>
         <module>common-core</module>
+        <module>appointment-service</module>
     </modules>
 
     <properties>
