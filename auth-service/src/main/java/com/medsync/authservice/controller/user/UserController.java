@@ -26,35 +26,35 @@ public class UserController {
     private final UserService userService;
 
     @GetMapping
-    @PreAuthorize("hasAuthority('ADMIN_READ')")
+    @PreAuthorize("hasAuthority('USER_READ')")
     @Operation(summary = "List all users (paginated)")
     public ResponseEntity<Page<UserResponse>> getAllUsers(@ParameterObject Pageable pageable) {
         return ResponseEntity.ok(userService.getAllUsers(pageable));
     }
 
     @GetMapping("/search")
-    @PreAuthorize("hasAuthority('ADMIN_READ')")
+    @PreAuthorize("hasAuthority('USER_READ')")
     @Operation(summary = "Search users with filters")
     public ResponseEntity<Page<UserResponse>> search(@ParameterObject UserFilter filter, @ParameterObject Pageable pageable) {
         return ResponseEntity.ok(userService.search(filter, pageable));
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAuthority('ADMIN_READ')")
+    @PreAuthorize("hasAuthority('USER_READ')")
     @Operation(summary = "Get user by id")
     public ResponseEntity<UserResponse> getUserById(@PathVariable UUID id) {
         return ResponseEntity.ok(userService.getUserById(id));
     }
 
     @PostMapping
-    @PreAuthorize("hasAuthority('ADMIN_CREATE')")
+    @PreAuthorize("hasAuthority('USER_CREATE')")
     public ResponseEntity<UserResponse> createUser(@Valid @RequestBody CreateUserRequest request) {
         UserResponse created = userService.createUser(request);
         return ResponseEntity.created(URI.create("/api/v1/users/" + created.id())).body(created);
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('ADMIN_UPDATE')")
+    @PreAuthorize("hasAuthority('USER_UPDATE')")
     @Operation(summary = "Update an existing user")
     public ResponseEntity<UserResponse> updateUser(@PathVariable UUID id, @Valid @RequestBody UpdateUserRequest request) {
         return ResponseEntity.ok(userService.updateUser(id, request));
