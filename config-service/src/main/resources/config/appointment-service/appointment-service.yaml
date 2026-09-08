@@ -11,3 +11,33 @@ logging:
 
 server:
   port: ${APPOINTMENT_SERVER_PORT:8003}
+
+spring:
+  cloud:
+    openfeign:
+      circuitbreaker:
+        enabled: true
+        alphanumeric-ids:
+          enabled: true
+
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        registerHealthIndicator: true
+        slidingWindowType: COUNT_BASED
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+        permittedNumberOfCallsInHalfOpenState: 3
+        recordExceptions:
+          - feign.FeignException
+          - java.io.IOException
+          - java.util.concurrent.TimeoutException
+          - com.medsync.appointmentservice.exception.custom.PatientServiceUnavailableException
+    instances:
+      patient-service:
+        baseConfig: default
+      "PatientClient#getPatientById(UUID)":
+        baseConfig: default

@@ -1,11 +1,6 @@
 package com.medsync.appointmentservice.exception.handler;
 
-import com.medsync.appointmentservice.exception.custom.AppointmentConflictException;
-import com.medsync.appointmentservice.exception.custom.AppointmentModificationNotAllowedException;
-import com.medsync.appointmentservice.exception.custom.InvalidAppointmentScheduleException;
-import com.medsync.appointmentservice.exception.custom.InvalidAppointmentStatusTransitionException;
-import com.medsync.appointmentservice.exception.custom.PatientInactiveException;
-import com.medsync.appointmentservice.exception.custom.PatientNotFoundException;
+import com.medsync.appointmentservice.exception.custom.*;
 import com.medsync.commoncore.error.dto.ProblemDetails;
 import com.medsync.commoncore.error.enums.ErrorCode;
 import com.medsync.commoncore.error.handler.AbstractGlobalExceptionHandler;
@@ -126,5 +121,13 @@ public class GlobalExceptionHandler extends AbstractGlobalExceptionHandler {
     public ResponseEntity<ProblemDetails> handleOptimisticLockingFailure(OptimisticLockingFailureException ex, HttpServletRequest request) {
         log.warn("Optimistic locking failure at {}", request.getRequestURI());
         return problem(HttpStatus.CONFLICT, BASE_TYPE + "/concurrent-update", "Concurrent update detected. Please reload the resource and try again.", request, ErrorCode.CONFLICT);
+    }
+
+    @ExceptionHandler(PatientServiceUnavailableException.class)
+    public ResponseEntity<ProblemDetails> handlePatientServiceUnavailable(PatientServiceUnavailableException ex, HttpServletRequest request) {
+        log.error("Patient service unavailable at {}: {}", request.getRequestURI(), ex.getMessage());
+        return problem(HttpStatus.SERVICE_UNAVAILABLE, BASE_TYPE + "/patient-service-unavailable",
+                "The patient service is currently unavailable. Please try again later.", request, ErrorCode.SERVICE_UNAVAILABLE);
+
     }
 }
