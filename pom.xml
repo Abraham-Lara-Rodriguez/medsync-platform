@@ -17,14 +17,15 @@
     <packaging>pom</packaging>
 
     <modules>
-        <module>config-service</module>
-        <module>discovery-service</module>
-        <module>api-gateway</module>
-        <module>patient-service</module>
-        <module>auth-service</module>
-        <module>common-security</module>
-        <module>common-core</module>
-        <module>appointment-service</module>
+        <module>infrastructure/config-service</module>
+        <module>infrastructure/discovery-service</module>
+        <module>shared/common-security</module>
+        <module>shared/common-core</module>
+        <module>gateway/api-gateway</module>
+        <module>services/patient-service</module>
+        <module>services/auth-service</module>
+        <module>services/appointment-service</module>
+        <module>services/doctor-service</module>
     </modules>
 
     <properties>
