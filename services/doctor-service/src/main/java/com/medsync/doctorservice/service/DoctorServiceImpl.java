@@ -1,10 +1,10 @@
 package com.medsync.doctorservice.service;
 
+import com.medsync.commoncore.error.custom.ResourceNotFoundException;
 import com.medsync.doctorservice.domain.entity.Doctor;
 import com.medsync.doctorservice.dto.request.CreateDoctorRequest;
 import com.medsync.doctorservice.dto.request.UpdateDoctorRequest;
 import com.medsync.doctorservice.dto.response.DoctorResponse;
-import com.medsync.doctorservice.exception.custom.ResourceNotFoundException;
 import com.medsync.doctorservice.mapper.DoctorMapper;
 import com.medsync.doctorservice.repository.DoctorRepository;
 
@@ -22,6 +22,8 @@ public class DoctorServiceImpl implements DoctorService {
 
     private final DoctorRepository doctorRepository;
     private final DoctorMapper doctorMapper;
+    private final DoctorHashService doctorHashService;
+    private final DoctorUniquenessValidator doctorUniquenessValidator;
 
     @Override
     @Transactional(readOnly = true)
@@ -37,10 +39,10 @@ public class DoctorServiceImpl implements DoctorService {
     }
 
     @Override
-    @Transactional()
+    @Transactional
     public DoctorResponse createDoctor(CreateDoctorRequest request) {
-
-        // TODO: Implement validation logic for the request if needed (e.g., check for unique email or medical license)
+        DoctorHashService.DoctorHashes hashes = doctorHashService.fromCreateRequest(request);
+        doctorUniquenessValidator.validateForCreate(hashes);
 
         Doctor doctor = Doctor.create(
                 request.firstName(),
@@ -54,13 +56,18 @@ public class DoctorServiceImpl implements DoctorService {
     }
 
     @Override
-    @Transactional()
+    @Transactional
     public DoctorResponse updateDoctor(UUID id, UpdateDoctorRequest request) {
         Doctor doctor = findDoctorOrThrow(id);
+
+        DoctorHashService.DoctorHashes hashes = doctorHashService.fromUpdateRequest(request);
+        doctorUniquenessValidator.validateForUpdate(id, hashes);
+
         doctor.changeFirstName(request.firstName());
         doctor.changeLastName(request.lastName());
         doctor.changeEmail(request.email());
         doctor.changePhone(request.phone());
+        doctor.changeStatus(request.status());
         return doctorMapper.toResponse(doctorRepository.save(doctor));
     }
 
@@ -69,5 +76,5 @@ public class DoctorServiceImpl implements DoctorService {
         return doctorRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Doctor not found with id: " + id));
     }
-    
+
 }

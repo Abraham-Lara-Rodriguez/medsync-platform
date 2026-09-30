@@ -1,6 +1,7 @@
 package com.medsync.doctorservice.domain.entity;
 
-import com.medsync.doctorservice.domain.constants.DoctorConstraints;
+import com.medsync.doctorservice.domain.converter.DeterministicHasher;
+import com.medsync.doctorservice.domain.converter.EncryptedConverter;
 import com.medsync.doctorservice.domain.enums.DoctorStatus;
 import com.medsync.doctorservice.domain.enums.Specialty;
 import jakarta.persistence.*;
@@ -36,14 +37,26 @@ public class Doctor {
     @Enumerated(EnumType.STRING)
     private Specialty specialty;
 
-    @Column(nullable = false, unique = true, length = MAX_MEDICAL_LICENSE_LENGTH)
+    @Column(columnDefinition = "TEXT", nullable = false)
+    @Convert(converter = EncryptedConverter.class)
     private String medicalLicense;
 
-    @Column(nullable = false, unique = true, length = MAX_EMAIL_LENGTH)
+    @Column(columnDefinition = "TEXT", nullable = false)
+    @Convert(converter = EncryptedConverter.class)
     private String email;
 
-    @Column(nullable = false, unique = true, length = MAX_PHONE_LENGTH)
+    @Column(columnDefinition = "TEXT", nullable = false)
+    @Convert(converter = EncryptedConverter.class)
     private String phone;
+
+    @Column(name = "medical_license_hash", nullable = false, unique = true, length = 64)
+    private String medicalLicenseHash;
+
+    @Column(name = "email_hash", nullable = false, unique = true, length = 64)
+    private String emailHash;
+
+    @Column(name = "phone_hash", nullable = false, unique = true, length = 64)
+    private String phoneHash;
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
@@ -117,6 +130,7 @@ public class Doctor {
             throw new IllegalArgumentException("Medical license contains invalid characters");
         }
         this.medicalLicense = cleaned;
+        this.medicalLicenseHash = DeterministicHasher.hash(cleaned);
     }
 
     public void changeEmail(String email) {
@@ -131,6 +145,7 @@ public class Doctor {
             throw new IllegalArgumentException("Email format is invalid");
         }
         this.email = cleaned;
+        this.emailHash = DeterministicHasher.hash(cleaned);
     }
 
     public void changePhone(String phone) {
@@ -145,6 +160,7 @@ public class Doctor {
             throw new IllegalArgumentException("Phone contains invalid characters");
         }
         this.phone = cleaned;
+        this.phoneHash = DeterministicHasher.hash(cleaned);
     }
 
     public void changeStatus(DoctorStatus status) {
@@ -154,9 +170,6 @@ public class Doctor {
         this.status = status;
     }
 
-    //------------------//
-    // domain methods //
-    //---------------//
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

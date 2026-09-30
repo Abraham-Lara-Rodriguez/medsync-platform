@@ -1,6 +1,7 @@
 package com.medsync.doctorservice.domain.enums;
 
 public enum Specialty {
+    GENERAL_MEDICINE,
     GENERAL_PRACTICE,
     CARDIOLOGY,
     DERMATOLOGY,

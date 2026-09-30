@@ -16,7 +16,7 @@ import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/doctor")
+@RequestMapping("/api/v1/doctors")
 public class DoctorController {
 
     private final DoctorService doctorService;

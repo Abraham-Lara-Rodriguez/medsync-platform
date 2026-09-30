@@ -8,4 +8,15 @@ import java.util.UUID;
 
 @Repository
 public interface DoctorRepository extends JpaRepository<Doctor, UUID> {
+    boolean existsByEmailHash(String emailHash);
+
+    boolean existsByEmailHashAndIdNot(String emailHash, UUID id);
+
+    boolean existsByMedicalLicenseHash(String medicalLicenseHash);
+
+    boolean existsByMedicalLicenseHashAndIdNot(String medicalLicenseHash, UUID id);
+
+    boolean existsByPhoneHash(String phoneHash);
+
+    boolean existsByPhoneHashAndIdNot(String phoneHash, UUID id);
 }
