@@ -21,8 +21,8 @@ public enum Permission {
     APPOINTMENT_CANCEL,
 
     // Doctor management
-    DOCTOR_CREATE,
     DOCTOR_READ,
+    DOCTOR_CREATE,
     DOCTOR_UPDATE,
 
     // Medical records
