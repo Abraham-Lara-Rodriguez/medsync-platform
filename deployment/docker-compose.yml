@@ -1,6 +1,6 @@
 services:
 
-  # ==================== INFRASTRUCTURE ====================
+  # ==================== DATABASES ====================
 
   patient-service-postgres:
     image: postgres:18
@@ -154,11 +154,11 @@ services:
     container_name: api-gateway
     restart: unless-stopped
     environment:
-      GATEWAY_SERVER_PROFILES: ${GATEWAY_SERVER_PROFILES}
       CONFIG_SERVER_HOSTNAME: ${CONFIG_SERVER_HOSTNAME}
       CONFIG_SERVER_PORT: ${CONFIG_SERVER_PORT}
       DISCOVERY_SERVER_HOSTNAME: ${DISCOVERY_SERVER_HOSTNAME}
       DISCOVERY_SERVER_PORT: ${DISCOVERY_SERVER_PORT}
+      GATEWAY_SERVER_PROFILES: ${GATEWAY_SERVER_PROFILES}
       GATEWAY_SERVER_PORT: ${GATEWAY_SERVER_PORT}
       JAVA_OPTS: "-Xms256m -Xmx512m"
     ports:
@@ -188,9 +188,9 @@ services:
     env_file:
       - ./.env
     environment:
-      AUTH_DB_URL: ${AUTH_DB_URL}
-      AUTH_DB_USERNAME: ${AUTH_DB_USERNAME}
-      AUTH_DB_PASSWORD: ${AUTH_DB_PASSWORD}
+      AUTH_SERVER_DB_URL: ${AUTH_SERVER_DB_URL}
+      AUTH_SERVER_DB_USERNAME: ${AUTH_SERVER_DB_USERNAME}
+      AUTH_SERVER_DB_PASSWORD: ${AUTH_SERVER_DB_PASSWORD}
 
       AUTH_SERVER_PORT: ${AUTH_SERVER_PORT}
       AUTH_SERVER_PROFILES: ${AUTH_SERVER_PROFILES}
@@ -203,7 +203,6 @@ services:
 
       CONFIG_SERVER_HOSTNAME: ${CONFIG_SERVER_HOSTNAME}
       CONFIG_SERVER_PORT: ${CONFIG_SERVER_PORT}
-
       DISCOVERY_SERVER_HOSTNAME: ${DISCOVERY_SERVER_HOSTNAME}
       DISCOVERY_SERVER_PORT: ${DISCOVERY_SERVER_PORT}
 
@@ -241,18 +240,22 @@ services:
     env_file:
       - ./.env
     environment:
-      PATIENT_DB_URL: ${PATIENT_DB_URL}
-      PATIENT_DB_USERNAME: ${PATIENT_DB_USERNAME}
-      PATIENT_DB_PASSWORD: ${PATIENT_DB_PASSWORD}
+      PATIENT_SERVER_DB_URL: ${PATIENT_SERVER_DB_URL}
+      PATIENT_SERVER_DB_USERNAME: ${PATIENT_SERVER_DB_USERNAME}
+      PATIENT_SERVER_DB_PASSWORD: ${PATIENT_SERVER_DB_PASSWORD}
       PATIENT_SERVER_PORT: ${PATIENT_SERVER_PORT}
       PATIENT_SERVER_PROFILES: ${PATIENT_SERVER_PROFILES}
+
+      AUTH_SERVER_SECRET_KEY: ${AUTH_SERVER_SECRET_KEY}
       ENCRYPTION_KEY: ${ENCRYPTION_KEY}
       MEDSYNC_HASH_KEY: ${MEDSYNC_HASH_KEY}
+
       CONFIG_SERVER_HOSTNAME: ${CONFIG_SERVER_HOSTNAME}
       CONFIG_SERVER_PORT: ${CONFIG_SERVER_PORT}
+
       DISCOVERY_SERVER_HOSTNAME: ${DISCOVERY_SERVER_HOSTNAME}
       DISCOVERY_SERVER_PORT: ${DISCOVERY_SERVER_PORT}
-      AUTH_SERVER_SECRET_KEY: ${AUTH_SERVER_SECRET_KEY}
+
       JAVA_OPTS: "-Xms256m -Xmx512m"
     ports:
       - "8002:8002"
@@ -274,6 +277,52 @@ services:
       retries: 5
       start_period: 40s
 
+    # ========================= DOCTOR SERVICE ====================
+
+  doctor-service:
+    build:
+      context: ..
+      dockerfile: services/doctor-service/Dockerfile
+    container_name: doctor-service
+    restart: unless-stopped
+    env_file:
+      - ./.env
+    environment:
+      DOCTOR_SERVER_DB_URL: ${DOCTOR_SERVER_DB_URL}
+      DOCTOR_SERVER_DB_USERNAME: ${DOCTOR_SERVER_DB_USERNAME}
+      DOCTOR_SERVER_DB_PASSWORD: ${DOCTOR_SERVER_DB_PASSWORD}
+      DOCTOR_SERVER_PORT: ${DOCTOR_SERVER_PORT}
+      DOCTOR_SERVER_PROFILES: ${DOCTOR_SERVER_PROFILES}
+
+      AUTH_SERVER_SECRET_KEY: ${AUTH_SERVER_SECRET_KEY}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+      MEDSYNC_HASH_KEY: ${MEDSYNC_HASH_KEY}
+
+      CONFIG_SERVER_HOSTNAME: ${CONFIG_SERVER_HOSTNAME}
+      CONFIG_SERVER_PORT: ${CONFIG_SERVER_PORT}
+      DISCOVERY_SERVER_HOSTNAME: ${DISCOVERY_SERVER_HOSTNAME}
+      DISCOVERY_SERVER_PORT: ${DISCOVERY_SERVER_PORT}
+      JAVA_OPTS: "-Xms256m -Xmx512m"
+    ports:
+      - "8003:8003"
+    depends_on:
+      doctor-service-postgres:
+        condition: service_healthy
+      config-service:
+        condition: service_healthy
+      discovery-service:
+        condition: service_healthy
+      auth-service:
+        condition: service_healthy
+    networks:
+      - medsync-network
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8003/actuator/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+
   # ========================= APPOINTMENT SERVICE ====================
 
   appointment-service:
@@ -290,14 +339,17 @@ services:
       APPOINTMENT_DB_PASSWORD: ${APPOINTMENT_DB_PASSWORD}
       APPOINTMENT_SERVER_PORT: ${APPOINTMENT_SERVER_PORT}
       APPOINTMENT_SERVER_PROFILES: ${APPOINTMENT_SERVER_PROFILES}
+
+      AUTH_SERVER_SECRET_KEY: ${AUTH_SERVER_SECRET_KEY}
+
       CONFIG_SERVER_HOSTNAME: ${CONFIG_SERVER_HOSTNAME}
       CONFIG_SERVER_PORT: ${CONFIG_SERVER_PORT}
       DISCOVERY_SERVER_HOSTNAME: ${DISCOVERY_SERVER_HOSTNAME}
       DISCOVERY_SERVER_PORT: ${DISCOVERY_SERVER_PORT}
-      AUTH_SERVER_SECRET_KEY: ${AUTH_SERVER_SECRET_KEY}
+
       JAVA_OPTS: "-Xms256m -Xmx512m"
     ports:
-      - "8003:8003"
+      - "8004:8004"
     depends_on:
       appointment-service-postgres:
         condition: service_healthy
@@ -310,50 +362,6 @@ services:
       patient-service:
         condition: service_healthy
       doctor-service:
-        condition: service_healthy
-    networks:
-      - medsync-network
-    healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8003/actuator/health" ]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 40s
-
-  # ========================= DOCTOR SERVICE ====================
-
-  doctor-service:
-    build:
-      context: ..
-      dockerfile: services/doctor-service/Dockerfile
-    container_name: doctor-service
-    restart: unless-stopped
-    env_file:
-      - ./.env
-    environment:
-      DOCTOR_DB_URL: ${DOCTOR_DB_URL}
-      DOCTOR_DB_USERNAME: ${DOCTOR_DB_USERNAME}
-      DOCTOR_DB_PASSWORD: ${DOCTOR_DB_PASSWORD}
-      DOCTOR_SERVER_PORT: ${DOCTOR_SERVER_PORT}
-      DOCTOR_SERVER_PROFILES: ${DOCTOR_SERVER_PROFILES}
-      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
-      MEDSYNC_HASH_KEY: ${MEDSYNC_HASH_KEY}
-      CONFIG_SERVER_HOSTNAME: ${CONFIG_SERVER_HOSTNAME}
-      CONFIG_SERVER_PORT: ${CONFIG_SERVER_PORT}
-      DISCOVERY_SERVER_HOSTNAME: ${DISCOVERY_SERVER_HOSTNAME}
-      DISCOVERY_SERVER_PORT: ${DISCOVERY_SERVER_PORT}
-      AUTH_SERVER_SECRET_KEY: ${AUTH_SERVER_SECRET_KEY}
-      JAVA_OPTS: "-Xms256m -Xmx512m"
-    ports:
-      - "8004:8004"
-    depends_on:
-      doctor-service-postgres:
-        condition: service_healthy
-      config-service:
-        condition: service_healthy
-      discovery-service:
-        condition: service_healthy
-      auth-service:
         condition: service_healthy
     networks:
       - medsync-network

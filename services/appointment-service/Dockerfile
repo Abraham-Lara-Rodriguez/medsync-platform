@@ -34,11 +34,11 @@ WORKDIR /app
 
 COPY --from=builder /app/services/appointment-service/target/appointment-service-*.jar appointment-service.jar
 
-EXPOSE 8003
+EXPOSE 8004
 
 ENV JAVA_OPTS=""
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-  CMD wget -qO- http://localhost:8003/actuator/health >/dev/null 2>&1 || exit 1
+  CMD wget -qO- http://localhost:8004/actuator/health >/dev/null 2>&1 || exit 1
 
 ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar appointment-service.jar"]
