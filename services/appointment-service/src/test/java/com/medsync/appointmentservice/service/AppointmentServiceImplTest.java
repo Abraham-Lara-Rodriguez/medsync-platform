@@ -1,5 +1,6 @@
 package com.medsync.appointmentservice.service;
 
+import com.medsync.appointmentservice.client.doctor.config.DoctorClient;
 import com.medsync.appointmentservice.client.patient.config.PatientClient;
 import com.medsync.appointmentservice.client.patient.dto.PatientResponse;
 import com.medsync.appointmentservice.client.patient.enums.Gender;
@@ -51,6 +52,8 @@ class AppointmentServiceImplTest {
     private AppointmentScheduleValidator appointmentScheduleValidator;
     @Mock
     private PatientClient patientClient;
+    @Mock
+    private DoctorClient doctorClient;
 
     private AppointmentServiceImpl appointmentService;
 
@@ -61,7 +64,7 @@ class AppointmentServiceImplTest {
     @BeforeEach
     void setUp() {
         appointmentService = new AppointmentServiceImpl(
-                appointmentScheduleValidator, appointmentRepository, appointmentMapper, patientClient);
+                appointmentScheduleValidator, appointmentRepository, appointmentMapper, patientClient,doctorClient);
     }
 
     private Appointment existingAppointment() {

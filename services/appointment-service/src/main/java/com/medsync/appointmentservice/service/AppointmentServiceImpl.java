@@ -1,5 +1,8 @@
 package com.medsync.appointmentservice.service;
 
+import com.medsync.appointmentservice.client.doctor.config.DoctorClient;
+import com.medsync.appointmentservice.client.doctor.dto.response.DoctorResponse;
+import com.medsync.appointmentservice.client.doctor.enums.DoctorStatus;
 import com.medsync.appointmentservice.client.patient.config.PatientClient;
 import com.medsync.appointmentservice.client.patient.dto.PatientResponse;
 import com.medsync.appointmentservice.client.patient.enums.PatientStatus;
@@ -32,6 +35,7 @@ public class AppointmentServiceImpl implements AppointmentService {
     private final AppointmentRepository appointmentRepository;
     private final AppointmentMapper appointmentMapper;
     private final PatientClient patientClient;
+    private final DoctorClient doctorClient;
 
     @Override
     @Transactional(readOnly = true)
@@ -55,7 +59,10 @@ public class AppointmentServiceImpl implements AppointmentService {
         // 1. Patient must exist and be active
         checkPatient(request.patientId());
 
-        // 2. Validate date/time
+        // 2. Doctor must exist and be active
+        checkDoctor(request.doctorId());
+
+        // 3. Validate date/time
         validateSchedule(
                 request.doctorId(),
                 request.appointmentDate(),
@@ -64,7 +71,7 @@ public class AppointmentServiceImpl implements AppointmentService {
                 null
         );
 
-        // 3. Create appointment
+        // 4. Create appointment
         Appointment appointment = Appointment.create(
                 request.patientId(),
                 request.doctorId(),
@@ -86,10 +93,7 @@ public class AppointmentServiceImpl implements AppointmentService {
 
     @Override
     @Transactional
-    public AppointmentResponse updateAppointment(
-            UpdateAppointmentRequest request,
-            UUID id
-    ) {
+    public AppointmentResponse updateAppointment(UpdateAppointmentRequest request, UUID id) {
         Appointment appointment = findAppointmentOrThrow(id);
 
         // 1. Validate whether appointment can be modified
@@ -115,17 +119,12 @@ public class AppointmentServiceImpl implements AppointmentService {
         appointment.setReason(request.reason());
         appointment.setNotes(request.notes());
 
-        return appointmentMapper.toResponse(
-                appointmentRepository.save(appointment)
-        );
+        return appointmentMapper.toResponse(appointmentRepository.save(appointment));
     }
 
     @Override
     @Transactional
-    public AppointmentResponse updateAppointmentStatus(
-            UpdateAppointmentStatusRequest request,
-            UUID id
-    ) {
+    public AppointmentResponse updateAppointmentStatus(UpdateAppointmentStatusRequest request, UUID id) {
         Appointment appointment = findAppointmentOrThrow(id);
 
         switch (request.status()) {
@@ -138,9 +137,7 @@ public class AppointmentServiceImpl implements AppointmentService {
             );
         }
 
-        return appointmentMapper.toResponse(
-                appointmentRepository.save(appointment)
-        );
+        return appointmentMapper.toResponse(appointmentRepository.save(appointment));
     }
 
     /* ================= HELPERS ================= */
@@ -182,9 +179,22 @@ public class AppointmentServiceImpl implements AppointmentService {
         return patient;
     }
 
+    private DoctorResponse checkDoctor(UUID id) {
+        DoctorResponse doctor = doctorClient.getDoctorById(id);
 
-    // TODO: validate that the doctor exists and is active once doctor-service is available
-    // doctorClient.getDoctorById(doctorId); // Future Feign client
+        if (doctor == null) {
+            throw new DoctorNotFoundException(
+                    "Doctor not found with id: " + id
+            );
+        }
+
+        if (doctor.status() != DoctorStatus.ACTIVE) {
+            throw new DoctorInactiveException("Doctor is not active");
+        }
+
+        return doctor;
+    }
+
     private void validateSchedule(UUID doctorId, LocalDate appointmentDate, LocalTime startTime,
                                   LocalTime endTime, UUID appointmentId) {
         appointmentScheduleValidator.validate(

@@ -1,0 +1,25 @@
+package com.medsync.appointmentservice.client.doctor.enums;
+
+public enum Specialty {
+    GENERAL_MEDICINE,
+    GENERAL_PRACTICE,
+    CARDIOLOGY,
+    DERMATOLOGY,
+    ENDOCRINOLOGY,
+    GASTROENTEROLOGY,
+    HEMATOLOGY,
+    INFECTIOUS_DISEASES,
+    NEPHROLOGY,
+    NEUROLOGY,
+    OBSTETRICS_GYNECOLOGY,
+    ONCOLOGY,
+    OPHTHALMOLOGY,
+    ORTHOPEDICS,
+    PEDIATRICS,
+    PSYCHIATRY,
+    PULMONOLOGY,
+    RADIOLOGY,
+    RHEUMATOLOGY,
+    SURGERY,
+    UROLOGY
+}

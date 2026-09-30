@@ -36,8 +36,13 @@ resilience4j:
           - java.io.IOException
           - java.util.concurrent.TimeoutException
           - com.medsync.appointmentservice.exception.custom.PatientServiceUnavailableException
+#          - com.medsync.doctorservice.exception.custom.DoctorServiceUnavailableException
     instances:
       patient-service:
         baseConfig: default
       "PatientClient#getPatientById(UUID)":
+        baseConfig: default
+      doctor-service:
+        baseConfig: default
+      "DoctorClient#getDoctorById(UUID)":
         baseConfig: default

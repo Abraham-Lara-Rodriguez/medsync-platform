@@ -1,4 +1,4 @@
-package com.medsync.appointmentservice.client.patient.config;
+package com.medsync.appointmentservice.client.component;
 
 import feign.RequestInterceptor;
 import feign.RequestTemplate;
