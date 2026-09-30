@@ -1,49 +1,77 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <!-- Maven model version -->
     <modelVersion>4.0.0</modelVersion>
+
+    <!-- Parent POM -->
     <parent>
         <groupId>com.medsync</groupId>
         <artifactId>platform</artifactId>
         <version>0.0.1-SNAPSHOT</version>
         <relativePath>./../../pom.xml</relativePath>
     </parent>
+
+    <!-- Project metadata -->
     <artifactId>api-gateway</artifactId>
     <name>api-gateway</name>
     <description>api-gateway</description>
+
+    <!-- Project properties -->
     <properties>
         <java.version>17</java.version>
         <spring-cloud.version>2025.1.2</spring-cloud.version>
     </properties>
+
+    <!-- Project dependencies -->
     <dependencies>
+
+        <!-- Spring Cloud Config Client -->
         <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-config</artifactId>
         </dependency>
+
+        <!-- Spring Cloud Gateway with WebFlux -->
         <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-gateway-server-webflux</artifactId>
         </dependency>
+
+        <!-- Client-side load balancing -->
         <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-loadbalancer</artifactId>
         </dependency>
+
+        <!-- Netflix Eureka Client -->
         <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
         </dependency>
+
+        <!-- Reactor testing support -->
         <dependency>
             <groupId>io.projectreactor</groupId>
             <artifactId>reactor-test</artifactId>
             <scope>test</scope>
         </dependency>
+
+        <!-- Spring Boot Actuator -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
+
     </dependencies>
+
+    <!-- Dependency version management -->
     <dependencyManagement>
         <dependencies>
+
+            <!-- Spring Cloud BOM -->
             <dependency>
                 <groupId>org.springframework.cloud</groupId>
                 <artifactId>spring-cloud-dependencies</artifactId>
@@ -51,15 +79,20 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
+
         </dependencies>
     </dependencyManagement>
 
+    <!-- Build configuration -->
     <build>
         <plugins>
+
+            <!-- Spring Boot Maven Plugin -->
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
+
         </plugins>
     </build>
 
