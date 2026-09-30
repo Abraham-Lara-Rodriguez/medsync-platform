@@ -14,6 +14,7 @@ COPY services/patient-service/pom.xml services/patient-service/
 COPY shared/common-security/pom.xml shared/common-security/
 COPY shared/common-core/pom.xml shared/common-core/
 COPY services/appointment-service/pom.xml services/appointment-service/
+COPY services/doctor-service/pom.xml services/doctor-service/
 
 # Pre-download dependencies (cache layer, reused if pom.xml unchanged)
 RUN mvn -f /app/pom.xml dependency:resolve -pl services/auth-service -am -q || true

@@ -309,10 +309,56 @@ services:
         condition: service_healthy
       patient-service:
         condition: service_healthy
+      doctor-service:
+        condition: service_healthy
     networks:
       - medsync-network
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:8003/actuator/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+
+  # ========================= DOCTOR SERVICE ====================
+
+  doctor-service:
+    build:
+      context: ..
+      dockerfile: services/doctor-service/Dockerfile
+    container_name: doctor-service
+    restart: unless-stopped
+    env_file:
+      - ./.env
+    environment:
+      DOCTOR_DB_URL: ${DOCTOR_DB_URL}
+      DOCTOR_DB_USERNAME: ${DOCTOR_DB_USERNAME}
+      DOCTOR_DB_PASSWORD: ${DOCTOR_DB_PASSWORD}
+      DOCTOR_SERVER_PORT: ${DOCTOR_SERVER_PORT}
+      DOCTOR_SERVER_PROFILES: ${DOCTOR_SERVER_PROFILES}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+      MEDSYNC_HASH_KEY: ${MEDSYNC_HASH_KEY}
+      CONFIG_SERVER_HOSTNAME: ${CONFIG_SERVER_HOSTNAME}
+      CONFIG_SERVER_PORT: ${CONFIG_SERVER_PORT}
+      DISCOVERY_SERVER_HOSTNAME: ${DISCOVERY_SERVER_HOSTNAME}
+      DISCOVERY_SERVER_PORT: ${DISCOVERY_SERVER_PORT}
+      AUTH_SERVER_SECRET_KEY: ${AUTH_SERVER_SECRET_KEY}
+      JAVA_OPTS: "-Xms256m -Xmx512m"
+    ports:
+      - "8004:8004"
+    depends_on:
+      doctor-service-postgres:
+        condition: service_healthy
+      config-service:
+        condition: service_healthy
+      discovery-service:
+        condition: service_healthy
+      auth-service:
+        condition: service_healthy
+    networks:
+      - medsync-network
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8004/actuator/health" ]
       interval: 30s
       timeout: 10s
       retries: 5
