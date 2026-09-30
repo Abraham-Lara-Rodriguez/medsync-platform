@@ -10,7 +10,7 @@ logging:
     com.medsync.appointmentservice: info
 
 server:
-  port: ${APPOINTMENT_SERVER_PORT:8003}
+  port: ${APPOINTMENT_SERVER_PORT:8004}
 
 spring:
   cloud:

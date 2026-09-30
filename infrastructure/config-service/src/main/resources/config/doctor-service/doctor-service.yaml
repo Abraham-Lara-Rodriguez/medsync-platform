@@ -1,9 +1,3 @@
-medsync:
-  encryption:
-    key: ${ENCRYPTION_KEY}
-  hash:
-    key: ${MEDSYNC_HASH_KEY}
-
 eureka:
   instance:
     prefer-ip-address: true
@@ -16,4 +10,4 @@ logging:
     com.medsync.doctorservice: info
 
 server:
-  port: ${DOCTOR_SERVER_PORT:8004}
+  port: ${DOCTOR_SERVER_PORT:8003}

@@ -33,3 +33,11 @@ eureka:
 medsync:
   security:
     secret-key: ${AUTH_SERVER_SECRET_KEY}
+    access-token-expiration: ${AUTH_SERVER_ACCESS_TOKEN_EXPIRATION:3600000}
+    refresh-token-expiration: ${AUTH_SERVER_REFRESH_TOKEN_EXPIRATION:86400000}
+    password-strength: ${AUTH_SERVER_PASSWORD_STRENGTH:10}
+    client-origin: ${AUTH_SERVER_CLIENT_ORIGIN:http://localhost:3000}
+  encryption:
+    key: ${ENCRYPTION_KEY}
+  hash:
+    key: ${MEDSYNC_HASH_KEY}
