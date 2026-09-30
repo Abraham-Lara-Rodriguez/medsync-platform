@@ -18,6 +18,7 @@ eureka:
     register-with-eureka: false
     fetch-registry: false
 
+#revisar porque estan harcodeado estas variables
 medsync:
   security:
     secret-key: dGVzdC1zZWNyZXQta2V5LWZvci1qd3QtdGVzdHMtbXVzdC1iZS1sb25nLWVub3VnaA==
