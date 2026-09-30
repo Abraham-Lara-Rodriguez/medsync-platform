@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Configuration;
 @Getter
 @Setter
 @Configuration
-@ConfigurationProperties(prefix = "auth-service.security")
+@ConfigurationProperties(prefix = "medsync.security")
 public class AuthSecurityProperties {
 
     @NotBlank
