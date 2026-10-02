@@ -18,7 +18,7 @@ eureka:
     register-with-eureka: false
     fetch-registry: false
 
-auth-service:
+medsync:
   security:
     secret-key: dGVzdC1zZWNyZXQta2V5LWZvci1qd3QtdGVzdHMtbXVzdC1iZS1sb25nLWVub3VnaA==
     access-token-expiration: 900000

@@ -41,3 +41,9 @@ medsync:
     key: ${ENCRYPTION_KEY}
   hash:
     key: ${MEDSYNC_HASH_KEY}
+
+app:
+  bootstrap-admin:
+    enabled: ${BOOTSTRAP_ADMIN_ENABLED:false}
+    email: ${BOOTSTRAP_ADMIN_EMAIL:}
+    password: ${BOOTSTRAP_ADMIN_PASSWORD:}
