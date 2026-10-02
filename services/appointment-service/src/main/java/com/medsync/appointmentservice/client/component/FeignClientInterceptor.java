@@ -18,6 +18,9 @@ public class FeignClientInterceptor implements RequestInterceptor {
             if (authorization != null && !authorization.isBlank()) {
                 template.header("Authorization", authorization);
             }
+        } else {
+            // No servlet request context available (e.g., background tasks / tests)
+            // Do not fail; rely on service-level auth if configured.
         }
     }
 }

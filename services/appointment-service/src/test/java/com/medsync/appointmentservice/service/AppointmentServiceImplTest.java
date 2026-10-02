@@ -112,6 +112,15 @@ class AppointmentServiceImplTest {
         when(patientClient.getPatientById(PATIENT_ID)).thenReturn(patient(PatientStatus.ACTIVE));
     }
 
+    private void stubDoctorFound() {
+        when(doctorClient.getDoctorById(DOCTOR_ID)).thenReturn(
+            new com.medsync.appointmentservice.client.doctor.dto.response.DoctorResponse(
+                DOCTOR_ID, "Dr", "Test",
+                com.medsync.appointmentservice.client.doctor.enums.Specialty.GENERAL_MEDICINE,
+                "MD-99999", "dr@test.com", "+123",
+                com.medsync.appointmentservice.client.doctor.enums.DoctorStatus.ACTIVE));
+    }
+
     private void stubNoOverlap() {
         when(appointmentRepository.existsOverlappingAppointment(any(), any(), any(), any(), isNull())).thenReturn(false);
     }
@@ -187,6 +196,7 @@ class AppointmentServiceImplTest {
         @DisplayName("creates and saves appointment when patient is active")
         void createsWhenPatientActive() {
             stubActivePatient();
+            stubDoctorFound();
             doNothing().when(appointmentScheduleValidator).validate(any(), any(), any());
             stubNoOverlap();
 
@@ -238,6 +248,7 @@ class AppointmentServiceImplTest {
         @DisplayName("throws InvalidAppointmentScheduleException when the schedule is invalid")
         void throwsWhenScheduleInvalid() {
             stubActivePatient();
+            stubDoctorFound();
             doThrow(new InvalidAppointmentScheduleException("Appointment must be scheduled in the future"))
                     .when(appointmentScheduleValidator).validate(any(), any(), any());
 
@@ -253,6 +264,7 @@ class AppointmentServiceImplTest {
         @DisplayName("throws AppointmentConflictException when doctor has overlapping appointment")
         void throwsWhenOverlapping() {
             stubActivePatient();
+            stubDoctorFound();
             doNothing().when(appointmentScheduleValidator).validate(any(), any(), any());
             when(appointmentRepository.existsOverlappingAppointment(any(), any(), any(), any(), isNull())).thenReturn(true);
 

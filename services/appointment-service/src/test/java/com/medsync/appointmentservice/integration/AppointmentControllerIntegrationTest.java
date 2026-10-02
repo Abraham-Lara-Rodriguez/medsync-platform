@@ -1,5 +1,7 @@
 package com.medsync.appointmentservice.integration;
 
+import com.medsync.appointmentservice.client.doctor.config.DoctorClient;
+import com.medsync.appointmentservice.client.doctor.dto.response.DoctorResponse;
 import com.medsync.appointmentservice.client.patient.config.PatientClient;
 import com.medsync.appointmentservice.client.patient.dto.PatientResponse;
 import com.medsync.appointmentservice.client.patient.enums.BloodType;
@@ -53,6 +55,9 @@ class AppointmentControllerIntegrationTest extends AbstractIntegrationTest {
     @MockitoBean
     private PatientClient patientClient;
 
+    @MockitoBean
+    private DoctorClient doctorClient;
+
     private UUID patientId;
     private UUID doctorId;
     private UUID appointmentId;
@@ -64,7 +69,7 @@ class AppointmentControllerIntegrationTest extends AbstractIntegrationTest {
         patientId = UUID.randomUUID();
         doctorId = UUID.randomUUID();
 
-        // The real patient-service is not running in tests; stub the Feign client.
+        // The real patient-service and doctor-service are not running in tests; stub the Feign clients.
         PatientResponse patient = new PatientResponse(
                 patientId, "Juan", "Pérez", "12345678",
                 Gender.MALE, LocalDate.of(1990, 1, 15), "+573001234567",
@@ -72,6 +77,12 @@ class AppointmentControllerIntegrationTest extends AbstractIntegrationTest {
                 BloodType.O_POSITIVE, PatientStatus.ACTIVE
         );
         when(patientClient.getPatientById(patientId)).thenReturn(patient);
+
+        DoctorResponse doctor = new DoctorResponse(
+                doctorId, "Carlos", "García", com.medsync.appointmentservice.client.doctor.enums.Specialty.CARDIOLOGY,
+                "MD-12345", "carlos@medsync.test", "+573001234567", com.medsync.appointmentservice.client.doctor.enums.DoctorStatus.ACTIVE
+        );
+        when(doctorClient.getDoctorById(doctorId)).thenReturn(doctor);
 
         Appointment appointment = Appointment.create(
                 patientId, doctorId, AppointmentType.GENERAL, "Checkup", "Notes");
