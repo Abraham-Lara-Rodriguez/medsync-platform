@@ -9,9 +9,9 @@ services:
     env_file:
       - ./.env
     environment:
-      POSTGRES_DB: ${PATIENT_DB_NAME}
-      POSTGRES_USER: ${PATIENT_DB_USERNAME}
-      POSTGRES_PASSWORD: ${PATIENT_DB_PASSWORD}
+      POSTGRES_DB: ${PATIENT_SERVER_DB_NAME}
+      POSTGRES_USER: ${PATIENT_SERVER_DB_USERNAME}
+      POSTGRES_PASSWORD: ${PATIENT_SERVER_DB_PASSWORD}
     ports:
       - "5432:5432"
     volumes:
@@ -19,7 +19,7 @@ services:
     networks:
       - medsync-network
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ${PATIENT_DB_USERNAME} -d ${PATIENT_DB_NAME}" ]
+      test: [ "CMD-SHELL", "pg_isready -U ${PATIENT_SERVER_DB_USERNAME} -d ${PATIENT_SERVER_DB_NAME}" ]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -31,9 +31,9 @@ services:
     env_file:
       - ./.env
     environment:
-      POSTGRES_DB: ${AUTH_DB_NAME}
-      POSTGRES_USER: ${AUTH_DB_USERNAME}
-      POSTGRES_PASSWORD: ${AUTH_DB_PASSWORD}
+      POSTGRES_DB: ${AUTH_SERVER_DB_NAME}
+      POSTGRES_USER: ${AUTH_SERVER_DB_USERNAME}
+      POSTGRES_PASSWORD: ${AUTH_SERVER_DB_PASSWORD}
     ports:
       - "5433:5432"
     volumes:
@@ -41,7 +41,7 @@ services:
     networks:
       - medsync-network
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ${AUTH_DB_USERNAME} -d ${AUTH_DB_NAME}" ]
+      test: [ "CMD-SHELL", "pg_isready -U ${AUTH_SERVER_DB_USERNAME} -d ${AUTH_SERVER_DB_NAME}" ]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -53,9 +53,9 @@ services:
     env_file:
       - ./.env
     environment:
-      POSTGRES_DB: ${APPOINTMENT_DB_NAME}
-      POSTGRES_USER: ${APPOINTMENT_DB_USERNAME}
-      POSTGRES_PASSWORD: ${APPOINTMENT_DB_PASSWORD}
+      POSTGRES_DB: ${APPOINTMENT_SERVER_DB_NAME}
+      POSTGRES_USER: ${APPOINTMENT_SERVER_DB_USERNAME}
+      POSTGRES_PASSWORD: ${APPOINTMENT_SERVER_DB_PASSWORD}
     ports:
       - "5434:5432"
     volumes:
@@ -63,7 +63,7 @@ services:
     networks:
       - medsync-network
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ${APPOINTMENT_DB_USERNAME} -d ${APPOINTMENT_DB_NAME}" ]
+      test: [ "CMD-SHELL", "pg_isready -U ${APPOINTMENT_SERVER_DB_USERNAME} -d ${APPOINTMENT_SERVER_DB_NAME}" ]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -75,9 +75,9 @@ services:
     env_file:
       - ./.env
     environment:
-      POSTGRES_DB: ${DOCTOR_DB_NAME}
-      POSTGRES_USER: ${DOCTOR_DB_USERNAME}
-      POSTGRES_PASSWORD: ${DOCTOR_DB_PASSWORD}
+      POSTGRES_DB: ${DOCTOR_SERVER_DB_NAME}
+      POSTGRES_USER: ${DOCTOR_SERVER_DB_USERNAME}
+      POSTGRES_PASSWORD: ${DOCTOR_SERVER_DB_PASSWORD}
     ports:
       - "5435:5432"
     volumes:
@@ -85,7 +85,7 @@ services:
     networks:
       - medsync-network
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ${DOCTOR_DB_USERNAME} -d ${DOCTOR_DB_NAME}" ]
+      test: [ "CMD-SHELL", "pg_isready -U ${DOCTOR_SERVER_DB_USERNAME} -d ${DOCTOR_SERVER_DB_NAME}" ]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -200,6 +200,10 @@ services:
       AUTH_SERVER_REFRESH_TOKEN_EXPIRATION: ${AUTH_SERVER_REFRESH_TOKEN_EXPIRATION}
       AUTH_SERVER_PASSWORD_STRENGTH: ${AUTH_SERVER_PASSWORD_STRENGTH}
       AUTH_SERVER_CLIENT_ORIGIN: ${AUTH_SERVER_CLIENT_ORIGIN}
+
+      BOOTSTRAP_ADMIN_ENABLED: ${BOOTSTRAP_ADMIN_ENABLED}
+      BOOTSTRAP_ADMIN_EMAIL: ${BOOTSTRAP_ADMIN_EMAIL}
+      BOOTSTRAP_ADMIN_PASSWORD : ${BOOTSTRAP_ADMIN_PASSWORD}
 
       CONFIG_SERVER_HOSTNAME: ${CONFIG_SERVER_HOSTNAME}
       CONFIG_SERVER_PORT: ${CONFIG_SERVER_PORT}
@@ -334,9 +338,9 @@ services:
     env_file:
       - ./.env
     environment:
-      APPOINTMENT_DB_URL: ${APPOINTMENT_DB_URL}
-      APPOINTMENT_DB_USERNAME: ${APPOINTMENT_DB_USERNAME}
-      APPOINTMENT_DB_PASSWORD: ${APPOINTMENT_DB_PASSWORD}
+      APPOINTMENT_SERVER_DB_URL: ${APPOINTMENT_SERVER_DB_URL}
+      APPOINTMENT_SERVER_DB_USERNAME: ${APPOINTMENT_SERVER_DB_USERNAME}
+      APPOINTMENT_SERVER_DB_PASSWORD: ${APPOINTMENT_SERVER_DB_PASSWORD}
       APPOINTMENT_SERVER_PORT: ${APPOINTMENT_SERVER_PORT}
       APPOINTMENT_SERVER_PROFILES: ${APPOINTMENT_SERVER_PROFILES}
 
