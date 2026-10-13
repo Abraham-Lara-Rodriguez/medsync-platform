@@ -50,14 +50,6 @@
             <artifactId>spring-boot-starter-webmvc</artifactId>
         </dependency>
 
-        <!-- Spring Boot DevTools -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-devtools</artifactId>
-            <scope>runtime</scope>
-            <optional>true</optional>
-        </dependency>
-
         <!-- Spring MVC testing support -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -196,7 +188,7 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-data-jpa-test</artifactId>
-            <version>4.0.0-RC1</version>
+            <version>4.0.0</version>
             <scope>compile</scope>
         </dependency>
 
@@ -204,7 +196,7 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-test-autoconfigure</artifactId>
-            <version>4.1.0-RC1</version>
+            <version>4.1.0</version>
             <scope>compile</scope>
         </dependency>
 
