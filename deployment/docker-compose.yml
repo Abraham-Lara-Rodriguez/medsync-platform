@@ -110,7 +110,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
-      start_period: 40s
+      start_period: 60s
     depends_on:
       patient-service-postgres:
         condition: service_healthy
@@ -143,7 +143,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
-      start_period: 40s
+      start_period: 60s
 
   # ==================== API GATEWAY ====================
 
@@ -175,7 +175,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
-      start_period: 40s
+      start_period: 60s
 
   # ==================== AUTH SERVICE ====================
 
@@ -231,7 +231,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
-      start_period: 40s
+      start_period: 60s
 
   # ==================== PATIENT SERVICE ====================
 
@@ -251,8 +251,8 @@ services:
       PATIENT_SERVER_PROFILES: ${PATIENT_SERVER_PROFILES}
 
       AUTH_SERVER_SECRET_KEY: ${AUTH_SERVER_SECRET_KEY}
-      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
-      MEDSYNC_HASH_KEY: ${MEDSYNC_HASH_KEY}
+      ENCRYPTION_KEY: ${PATIENT_ENCRYPTION_KEY}
+      MEDSYNC_HASH_KEY: ${PATIENT_HASH_KEY}
 
       CONFIG_SERVER_HOSTNAME: ${CONFIG_SERVER_HOSTNAME}
       CONFIG_SERVER_PORT: ${CONFIG_SERVER_PORT}
@@ -279,7 +279,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
-      start_period: 40s
+      start_period: 60s
 
     # ========================= DOCTOR SERVICE ====================
 
@@ -299,8 +299,8 @@ services:
       DOCTOR_SERVER_PROFILES: ${DOCTOR_SERVER_PROFILES}
 
       AUTH_SERVER_SECRET_KEY: ${AUTH_SERVER_SECRET_KEY}
-      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
-      MEDSYNC_HASH_KEY: ${MEDSYNC_HASH_KEY}
+      ENCRYPTION_KEY: ${DOCTOR_ENCRYPTION_KEY}
+      MEDSYNC_HASH_KEY: ${DOCTOR_HASH_KEY}
 
       CONFIG_SERVER_HOSTNAME: ${CONFIG_SERVER_HOSTNAME}
       CONFIG_SERVER_PORT: ${CONFIG_SERVER_PORT}
@@ -325,7 +325,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
-      start_period: 40s
+      start_period: 60s
 
   # ========================= APPOINTMENT SERVICE ====================
 
@@ -374,7 +374,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
-      start_period: 40s
+      start_period: 60s
 
 # ==================== VOLUMES ====================
 

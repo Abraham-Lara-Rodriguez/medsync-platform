@@ -45,6 +45,6 @@ Desktop.ini
 **/.env.local
 **/.env.*.local
 !**/.env.template
-
+.env*
 
 documents/
