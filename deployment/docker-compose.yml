@@ -90,19 +90,21 @@ services:
       timeout: 5s
       retries: 10
 
-  # ==================== CONFIG SERVER ====================
+  # ==================== CONFIG SERVICE ====================
 
   config-service:
     build:
       context: ..
-      dockerfile: infrastructure/config-service/Dockerfile
+      dockerfile: deployment/docker/Dockerfile.base
+      args:
+        SERVICE_NAME: config-service
+        SERVICE: infrastructure/config-service
+        SERVICE_PORT: ${CONFIG_SERVER_PORT}
     container_name: config-service
     restart: unless-stopped
     environment:
       CONFIG_SERVER_PORT: ${CONFIG_SERVER_PORT}
       JAVA_OPTS: "-Xms256m -Xmx512m"
-    ports:
-      - "8888:8888"
     networks:
       - medsync-network
     healthcheck:
@@ -111,18 +113,22 @@ services:
       timeout: 10s
       retries: 5
       start_period: 60s
-    depends_on:
-      patient-service-postgres:
-        condition: service_healthy
-      auth-service-postgres:
-        condition: service_healthy
+#    depends_on:
+#      patient-service-postgres:
+#        condition: service_healthy
+#      auth-service-postgres:
+#        condition: service_healthy
 
   # ==================== DISCOVERY SERVICE ====================
 
   discovery-service:
     build:
       context: ..
-      dockerfile: infrastructure/discovery-service/Dockerfile
+      dockerfile: deployment/docker/Dockerfile.base
+      args:
+        SERVICE_NAME: discovery-service
+        SERVICE: infrastructure/discovery-service
+        SERVICE_PORT: ${DISCOVERY_SERVER_PORT}
     container_name: discovery-service
     restart: unless-stopped
     environment:
@@ -131,8 +137,8 @@ services:
       DISCOVERY_SERVER_HOSTNAME: ${DISCOVERY_SERVER_HOSTNAME}
       DISCOVERY_SERVER_PORT: ${DISCOVERY_SERVER_PORT}
       JAVA_OPTS: "-Xms256m -Xmx512m"
-    ports:
-      - "8761:8761"
+    #    ports:
+    #      - "8761:8761"
     depends_on:
       config-service:
         condition: service_healthy
@@ -150,7 +156,11 @@ services:
   api-gateway:
     build:
       context: ..
-      dockerfile: gateway/api-gateway/Dockerfile
+      dockerfile: deployment/docker/Dockerfile.base
+      args:
+        SERVICE_NAME: api-gateway
+        SERVICE: gateway/api-gateway
+        SERVICE_PORT: ${GATEWAY_SERVER_PORT}
     container_name: api-gateway
     restart: unless-stopped
     environment:
@@ -182,7 +192,11 @@ services:
   auth-service:
     build:
       context: ..
-      dockerfile: services/auth-service/Dockerfile
+      dockerfile: deployment/docker/Dockerfile.base
+      args:
+        SERVICE_NAME: auth-service
+        SERVICE: services/auth-service
+        SERVICE_PORT: ${AUTH_SERVER_PORT}
     container_name: auth-service
     restart: unless-stopped
     env_file:
@@ -212,8 +226,8 @@ services:
 
       JAVA_OPTS: "-Xms256m -Xmx512m"
 
-    ports:
-      - "8001:8001"
+    #    ports:
+    #      - "8001:8001"
 
     depends_on:
       auth-service-postgres:
@@ -238,7 +252,11 @@ services:
   patient-service:
     build:
       context: ..
-      dockerfile: services/patient-service/Dockerfile
+      dockerfile: deployment/docker/Dockerfile.base
+      args:
+        SERVICE_NAME: patient-service
+        SERVICE: services/patient-service
+        SERVICE_PORT: ${PATIENT_SERVER_PORT}
     container_name: patient-service
     restart: unless-stopped
     env_file:
@@ -261,8 +279,8 @@ services:
       DISCOVERY_SERVER_PORT: ${DISCOVERY_SERVER_PORT}
 
       JAVA_OPTS: "-Xms256m -Xmx512m"
-    ports:
-      - "8002:8002"
+    #    ports:
+    #      - "8002:8002"
     depends_on:
       patient-service-postgres:
         condition: service_healthy
@@ -286,7 +304,11 @@ services:
   doctor-service:
     build:
       context: ..
-      dockerfile: services/doctor-service/Dockerfile
+      dockerfile: deployment/docker/Dockerfile.base
+      args:
+        SERVICE_NAME: doctor-service
+        SERVICE: services/doctor-service
+        SERVICE_PORT: ${DOCTOR_SERVER_PORT}
     container_name: doctor-service
     restart: unless-stopped
     env_file:
@@ -307,8 +329,8 @@ services:
       DISCOVERY_SERVER_HOSTNAME: ${DISCOVERY_SERVER_HOSTNAME}
       DISCOVERY_SERVER_PORT: ${DISCOVERY_SERVER_PORT}
       JAVA_OPTS: "-Xms256m -Xmx512m"
-    ports:
-      - "8003:8003"
+    #    ports:
+    #      - "8003:8003"
     depends_on:
       doctor-service-postgres:
         condition: service_healthy
@@ -332,7 +354,11 @@ services:
   appointment-service:
     build:
       context: ..
-      dockerfile: services/appointment-service/Dockerfile
+      dockerfile: deployment/docker/Dockerfile.base
+      args:
+        SERVICE_NAME: appointment-service
+        SERVICE: services/appointment-service
+        SERVICE_PORT: ${APPOINTMENT_SERVER_PORT}
     container_name: appointment-service
     restart: unless-stopped
     env_file:
@@ -352,8 +378,8 @@ services:
       DISCOVERY_SERVER_PORT: ${DISCOVERY_SERVER_PORT}
 
       JAVA_OPTS: "-Xms256m -Xmx512m"
-    ports:
-      - "8004:8004"
+    #    ports:
+    #      - "8004:8004"
     depends_on:
       appointment-service-postgres:
         condition: service_healthy

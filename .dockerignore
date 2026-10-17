@@ -33,3 +33,15 @@
 **/.env.*
 !deployment/.env.template
 
+
+.git
+**/target
+**/.idea
+**/.vscode
+**/*.iml
+.env
+.env.*
+!.env.example
+!.env.template
+!.env.docker.template
+logs

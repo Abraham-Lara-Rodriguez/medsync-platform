@@ -1,0 +1,103 @@
+# =============================================================================
+# Dockerfile.base — single, shared build definition for every MedSync service.
+#
+# Why one file instead of one Dockerfile per service?
+#   This is a Maven multi-module project (root pom.xml + <modules>). Building any
+#   module with `mvn -pl <module> -am` requires the *entire* module tree's
+#   pom.xml files to resolve inter-module dependencies. Copying every pom.xml
+#   by hand in 7 separate Dockerfiles meant editing all 7 every time a new
+#   service was added. This file uses glob COPY patterns so a brand-new service
+#   is picked up automatically — no Dockerfile edits, ever.
+#
+# Build a specific service:
+#   docker build -f deployment/docker/Dockerfile.base \
+#       --build-arg SERVICE=services/appointment-service \
+#       -t medsync/appointment-service .
+#
+# In docker-compose.yml every service reuses this same file, only changing the
+# `SERVICE` build arg (see docker-compose_V2.yml).
+# =============================================================================
+
+# ---------------------------------------------------------------------------
+# Stage 1 — compile with Maven (layered for maximum cache reuse)
+# ---------------------------------------------------------------------------
+FROM maven:3.9.9-eclipse-temurin-17 AS builder
+
+WORKDIR /app
+
+# Build arg: Maven module path relative to the repo root.
+#   e.g. services/appointment-service, infrastructure/config-service, ...
+# The artifact name is derived from the last path segment (basename).
+ARG SERVICE=services/appointment-service
+# Optional override for the produced artifact name (defaults to basename of SERVICE).
+ARG SERVICE_NAME
+
+# Derive the artifact name from the module path when not explicitly provided.
+#   SERVICE_NAME defaults to the last segment, e.g. "appointment-service".
+RUN if [ -z "$SERVICE_NAME" ]; then \
+        SERVICE_NAME=$(basename "$SERVICE"); \
+        echo "SERVICE_NAME=$SERVICE_NAME" >> /etc/profile.d/medsync.sh; \
+    fi
+
+# Layer 1 (cacheable): copy ONLY pom.xml files first.
+# Use a deterministic pattern: explicitly list the directories that are known to contain pom.xmls.
+COPY pom.xml .
+COPY services/*/pom.xml services/
+COPY infrastructure/*/pom.xml infrastructure/
+COPY gateway/*/pom.xml gateway/
+COPY shared/*/pom.xml shared/
+
+# Layer 2 (cacheable): pre-resolve all dependencies.
+# BuildKit cache mount keeps ~/.m2 between builds so the first build of a day
+# is fast and subsequent builds reuse already-downloaded jars.
+# `|| true` keeps the layer valid even if dependency:resolve reports nothing new.
+RUN --mount=type=cache,target=/root/.m2,sharing=private \
+    mvn -B -q -f pom.xml \
+    -pl "$SERVICE" -am \
+    dependency:resolve -DincludeScope=runtime \
+    || true
+
+# Layer 3 (cacheable): copy source code for the target module + shared libs.
+# Only the selected service's src and the shared/* src invalidate this layer,
+# so building a different service does not bust the cache of unrelated modules.
+COPY services/ services/
+COPY infrastructure/ infrastructure/
+COPY gateway/ gateway/
+COPY shared/ shared/
+
+# Layer 4 (cacheable): package the selected module and its dependencies (-am).
+# -DskipTests keeps the image build fast; run tests separately in CI.
+RUN --mount=type=cache,target=/root/.m2,sharing=private \
+    mvn -B -q -f pom.xml \
+    -pl "$SERVICE" -am \
+    clean package -DskipTests
+
+# ---------------------------------------------------------------------------
+# Stage 2 — minimal runtime image
+# ---------------------------------------------------------------------------
+FROM eclipse-temurin:17-jre
+
+WORKDIR /app
+
+ARG SERVICE=services/appointment-service
+ARG SERVICE_NAME
+ARG SERVICE_PORT=8080
+
+COPY --from=builder \
+    /app/${SERVICE}/target/${SERVICE_NAME}-*.jar \
+    /app/app.jar
+
+# Run as non-root: no need for container privileges at runtime.
+RUN mkdir -p /app/logs && chown -R 1000:1000 /app/logs /app/app.jar
+USER 1000:1000
+
+ENV JAVA_OPTS="-Xms256m -Xmx512m" \
+    JAVA_TOOL_OPTIONS="-Djava.io.tmpdir=/tmp"
+
+EXPOSE ${SERVICE_PORT}
+
+# Lightweight health check against the Spring Boot actuator endpoint.
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=5 \
+    CMD ["sh", "-c", "wget -qO- http://localhost:${SERVICE_PORT}/actuator/health >/dev/null 2>&1 || exit 1"]
+
+ENTRYPOINT ["sh", "-c", "exec java $JAVA_OPTS -jar /app/app.jar"]
