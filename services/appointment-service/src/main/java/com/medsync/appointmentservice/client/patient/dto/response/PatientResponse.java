@@ -1,4 +1,4 @@
-package com.medsync.appointmentservice.client.patient.dto;
+package com.medsync.appointmentservice.client.patient.dto.response;
 
 import com.medsync.appointmentservice.client.patient.enums.BloodType;
 import com.medsync.appointmentservice.client.patient.enums.Gender;

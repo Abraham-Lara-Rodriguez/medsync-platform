@@ -4,7 +4,7 @@ import com.medsync.appointmentservice.client.doctor.config.DoctorClient;
 import com.medsync.appointmentservice.client.doctor.dto.response.DoctorResponse;
 import com.medsync.appointmentservice.client.doctor.enums.DoctorStatus;
 import com.medsync.appointmentservice.client.patient.config.PatientClient;
-import com.medsync.appointmentservice.client.patient.dto.PatientResponse;
+import com.medsync.appointmentservice.client.patient.dto.response.PatientResponse;
 import com.medsync.appointmentservice.client.patient.enums.PatientStatus;
 import com.medsync.appointmentservice.domain.entity.Appointment;
 import com.medsync.appointmentservice.domain.enums.AppointmentStatus;

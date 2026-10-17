@@ -1,7 +1,7 @@
 package com.medsync.appointmentservice.client.patient.component;
 
 import com.medsync.appointmentservice.client.patient.config.PatientClient;
-import com.medsync.appointmentservice.client.patient.dto.PatientResponse;
+import com.medsync.appointmentservice.client.patient.dto.response.PatientResponse;
 import com.medsync.appointmentservice.exception.custom.PatientServiceUnavailableException;
 import org.springframework.stereotype.Component;
 

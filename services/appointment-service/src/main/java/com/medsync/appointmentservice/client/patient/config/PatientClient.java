@@ -1,7 +1,7 @@
 package com.medsync.appointmentservice.client.patient.config;
 
 import com.medsync.appointmentservice.client.patient.component.PatientClientFallback;
-import com.medsync.appointmentservice.client.patient.dto.PatientResponse;
+import com.medsync.appointmentservice.client.patient.dto.response.PatientResponse;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
