@@ -1,103 +1,220 @@
 # =============================================================================
-# Dockerfile.base — single, shared build definition for every MedSync service.
+# Dockerfile.base — Shared multi-stage Dockerfile for MedSync services.
 #
-# Why one file instead of one Dockerfile per service?
-#   This is a Maven multi-module project (root pom.xml + <modules>). Building any
-#   module with `mvn -pl <module> -am` requires the *entire* module tree's
-#   pom.xml files to resolve inter-module dependencies. Copying every pom.xml
-#   by hand in 7 separate Dockerfiles meant editing all 7 every time a new
-#   service was added. This file uses glob COPY patterns so a brand-new service
-#   is picked up automatically — no Dockerfile edits, ever.
+# Purpose:
+#   Build and package any MedSync Maven module using a single Dockerfile.
 #
-# Build a specific service:
-#   docker build -f deployment/docker/Dockerfile.base \
+# Why a shared Dockerfile?
+#   MedSync is a Maven multi-module project. Building a module with
+#   `mvn -pl <module> -am` requires the root POM and the POM files of its
+#   dependent modules.
+#
+#   A shared Dockerfile avoids maintaining separate build definitions for
+#   each service. The module POMs are copied before the source code to improve
+#   Docker layer-cache reuse.
+#
+# Build example:
+#   docker build \
+#       -f deployment/docker/Dockerfile.base \
 #       --build-arg SERVICE=services/appointment-service \
 #       -t medsync/appointment-service .
 #
-# In docker-compose.yml every service reuses this same file, only changing the
-# `SERVICE` build arg (see docker-compose_V2.yml).
+# Build arguments:
+#   SERVICE            Maven module path relative to the repository root.
+#   SERVICE_NAME       Artifact name used to locate the packaged JAR.
+#   SERVICE_PORT       Port used by EXPOSE and the container health check.
+#   OTEL_AGENT_VERSION OpenTelemetry Java Agent release version.
+#
+# Runtime telemetry:
+#   OpenTelemetry tracing, metrics, and logs exporters are disabled by default.
+#   Docker Compose can override these defaults for individual services.
 # =============================================================================
 
-# ---------------------------------------------------------------------------
-# Stage 1 — compile with Maven (layered for maximum cache reuse)
-# ---------------------------------------------------------------------------
+
+# =============================================================================
+# Stage 1 — Build the application with Maven
+# =============================================================================
+# Use a dedicated build image so Maven and its build tools are excluded from
+# the final runtime image.
 FROM maven:3.9.9-eclipse-temurin-17 AS builder
 
 WORKDIR /app
 
-# Build arg: Maven module path relative to the repo root.
-#   e.g. services/appointment-service, infrastructure/config-service, ...
-# The artifact name is derived from the last path segment (basename).
+# ---------------------------------------------------------------------------
+# Build arguments
+# ---------------------------------------------------------------------------
+
+# Maven module path relative to the repository root.
+# Examples:
+#   services/appointment-service
+#   infrastructure/config-service
 ARG SERVICE=services/appointment-service
-# Optional override for the produced artifact name (defaults to basename of SERVICE).
+
+# Optional override for the packaged artifact name.
 ARG SERVICE_NAME
 
-# Derive the artifact name from the module path when not explicitly provided.
-#   SERVICE_NAME defaults to the last segment, e.g. "appointment-service".
+# Derive the artifact name from the module directory when it is not provided.
+# The value is written to a profile script for subsequent shell sessions.
 RUN if [ -z "$SERVICE_NAME" ]; then \
         SERVICE_NAME=$(basename "$SERVICE"); \
         echo "SERVICE_NAME=$SERVICE_NAME" >> /etc/profile.d/medsync.sh; \
     fi
 
-# Layer 1 (cacheable): copy ONLY pom.xml files first.
-# Use a deterministic pattern: explicitly list the directories that are known to contain pom.xmls.
-COPY pom.xml .
-COPY services/*/pom.xml services/
-COPY infrastructure/*/pom.xml infrastructure/
-COPY gateway/*/pom.xml gateway/
-COPY shared/*/pom.xml shared/
+# ---------------------------------------------------------------------------
+# Layer 1 — Copy Maven POM files
+# ---------------------------------------------------------------------------
+# Copy build descriptors before source code so source changes do not
+# automatically invalidate the dependency-resolution layers.
+#
+# Keep the module directory structure aligned with the root pom.xml.
+#COPY pom.xml .
+#COPY services/*/pom.xml services/
+#COPY infrastructure/*/pom.xml infrastructure/
+#COPY gateway/*/pom.xml gateway/
+#COPY shared/*/pom.xml shared/
 
-# Layer 2 (cacheable): pre-resolve all dependencies.
-# BuildKit cache mount keeps ~/.m2 between builds so the first build of a day
-# is fast and subsequent builds reuse already-downloaded jars.
-# `|| true` keeps the layer valid even if dependency:resolve reports nothing new.
+COPY pom.xml .
+
+# Services
+COPY services/auth-service/pom.xml services/auth-service/pom.xml
+COPY services/patient-service/pom.xml services/patient-service/pom.xml
+COPY services/appointment-service/pom.xml services/appointment-service/pom.xml
+COPY services/doctor-service/pom.xml services/doctor-service/pom.xml
+
+# Infrastructure
+COPY infrastructure/config-service/pom.xml infrastructure/config-service/pom.xml
+COPY infrastructure/discovery-service/pom.xml infrastructure/discovery-service/pom.xml
+
+# Gateway
+COPY gateway/api-gateway/pom.xml gateway/api-gateway/pom.xml
+
+# Shared modules
+COPY shared/common-core/pom.xml shared/common-core/pom.xml
+COPY shared/common-security/pom.xml shared/common-security/pom.xml
+
+# ---------------------------------------------------------------------------
+# Layer 2 — Resolve Maven dependencies
+# ---------------------------------------------------------------------------
+# BuildKit cache mounts preserve downloaded dependencies between builds.
+# This reduces repeated downloads when the dependency graph has not changed.
+#
+# `|| true` allows this cache-priming step to continue if dependency:resolve
+# fails; the actual packaging step below still determines build success.
 RUN --mount=type=cache,target=/root/.m2,sharing=private \
     mvn -B -q -f pom.xml \
     -pl "$SERVICE" -am \
     dependency:resolve -DincludeScope=runtime \
     || true
 
-# Layer 3 (cacheable): copy source code for the target module + shared libs.
-# Only the selected service's src and the shared/* src invalidate this layer,
-# so building a different service does not bust the cache of unrelated modules.
+# ---------------------------------------------------------------------------
+# Layer 3 — Copy application source code
+# ---------------------------------------------------------------------------
+# Copy the project modules after the dependency-resolution layer.
 COPY services/ services/
 COPY infrastructure/ infrastructure/
 COPY gateway/ gateway/
 COPY shared/ shared/
 
-# Layer 4 (cacheable): package the selected module and its dependencies (-am).
-# -DskipTests keeps the image build fast; run tests separately in CI.
+# ---------------------------------------------------------------------------
+# Layer 4 — Package the selected module
+# ---------------------------------------------------------------------------
+# `-pl` selects the target module.
+# `-am` also builds its required reactor modules.
+# Tests are skipped here because they should run separately in CI.
 RUN --mount=type=cache,target=/root/.m2,sharing=private \
     mvn -B -q -f pom.xml \
     -pl "$SERVICE" -am \
     clean package -DskipTests
 
-# ---------------------------------------------------------------------------
-# Stage 2 — minimal runtime image
-# ---------------------------------------------------------------------------
+
+# =============================================================================
+# Stage 2 — Download the OpenTelemetry Java Agent
+# =============================================================================
+# Keep the download tool and its dependencies out of the final runtime image.
+FROM curlimages/curl:8.12.1 AS otel-agent
+
+ARG OTEL_AGENT_VERSION
+
+USER root
+
+# Require an explicit agent version and verify that the downloaded JAR exists
+# and is not empty.
+RUN test -n "${OTEL_AGENT_VERSION}" \
+    && curl -fsSL \
+       "https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/download/v${OTEL_AGENT_VERSION}/opentelemetry-javaagent.jar" \
+       -o /opentelemetry-javaagent.jar \
+    && test -s /opentelemetry-javaagent.jar
+
+
+# =============================================================================
+# Stage 3 — Minimal Java runtime image
+# =============================================================================
+# Only the Java runtime, packaged application, and OpenTelemetry agent are
+# included in this stage.
 FROM eclipse-temurin:17-jre
 
 WORKDIR /app
 
+# ---------------------------------------------------------------------------
+# OpenTelemetry Java Agent
+# ---------------------------------------------------------------------------
+# Create the agent directory and copy the JAR from the dedicated download
+# stage.
+RUN mkdir -p /otel
+
+COPY --from=otel-agent \
+    /opentelemetry-javaagent.jar \
+    /otel/opentelemetry-javaagent.jar
+
+# ---------------------------------------------------------------------------
+# Runtime build arguments and application artifact
+# ---------------------------------------------------------------------------
+
+# Keep these arguments aligned with the module selected in the builder stage.
 ARG SERVICE=services/appointment-service
 ARG SERVICE_NAME
 ARG SERVICE_PORT=8080
 
+# Copy the packaged application from the builder stage.
 COPY --from=builder \
     /app/${SERVICE}/target/${SERVICE_NAME}-*.jar \
     /app/app.jar
 
-# Run as non-root: no need for container privileges at runtime.
+# ---------------------------------------------------------------------------
+# Runtime permissions
+# ---------------------------------------------------------------------------
+# Run the application as a non-root user.
 RUN mkdir -p /app/logs && chown -R 1000:1000 /app/logs /app/app.jar
+
 USER 1000:1000
 
+# ---------------------------------------------------------------------------
+# Java and OpenTelemetry defaults
+# ---------------------------------------------------------------------------
+# JAVA_OPTS configures the JVM heap.
+# JAVA_TOOL_OPTIONS automatically attaches the OpenTelemetry Java Agent.
+#
+# Exporters default to `none`; individual services can override these values
+# through their Docker Compose environment configuration.
 ENV JAVA_OPTS="-Xms256m -Xmx512m" \
-    JAVA_TOOL_OPTIONS="-Djava.io.tmpdir=/tmp"
+    JAVA_TOOL_OPTIONS="-Djava.io.tmpdir=/tmp -javaagent:/otel/opentelemetry-javaagent.jar" \
+    OTEL_TRACES_EXPORTER="none" \
+    OTEL_METRICS_EXPORTER="none" \
+    OTEL_LOGS_EXPORTER="none"
 
+# Document the service port.
 EXPOSE ${SERVICE_PORT}
 
-# Lightweight health check against the Spring Boot actuator endpoint.
+# ---------------------------------------------------------------------------
+# Container health check
+# ---------------------------------------------------------------------------
+# Check the Spring Boot Actuator health endpoint.
+# The application must expose /actuator/health for this check to succeed.
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=5 \
     CMD ["sh", "-c", "wget -qO- http://localhost:${SERVICE_PORT}/actuator/health >/dev/null 2>&1 || exit 1"]
 
+# ---------------------------------------------------------------------------
+# Application entry point
+# ---------------------------------------------------------------------------
+# Use a shell so JAVA_OPTS is expanded before Java starts.
 ENTRYPOINT ["sh", "-c", "exec java $JAVA_OPTS -jar /app/app.jar"]

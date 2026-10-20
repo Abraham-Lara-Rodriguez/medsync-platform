@@ -1,6 +1,12 @@
+# MedSync local development stack.
+# Keep secrets and environment-specific values in the referenced env files.
 services:
 
-  # ==================== DATABASES ====================
+  # ============================================================
+  # DATABASES
+  # Each service has its own PostgreSQL container, host port,
+  # persistent volume, and readiness check.
+  # ============================================================
 
   patient-service-postgres:
     image: postgres:18
@@ -18,6 +24,7 @@ services:
       - patient-service-postgres-volume:/var/lib/postgresql
     networks:
       - medsync-network
+    # PostgreSQL readiness check.
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U ${PATIENT_SERVER_DB_USERNAME} -d ${PATIENT_SERVER_DB_NAME}" ]
       interval: 10s
@@ -90,9 +97,44 @@ services:
       timeout: 5s
       retries: 10
 
-  # ==================== CONFIG SERVICE ====================
+  # ============================================================
+  # OBSERVABILITY
+  # Alloy receives OpenTelemetry data from MedSync containers and
+  # forwards configured signals to Grafana Cloud.
+  # OTLP receivers listen inside the Docker network on ports 4317
+  # (gRPC) and 4318 (HTTP). No host ports are published here.
+  # ============================================================
+  grafana-alloy:
+    image: grafana/alloy:latest
+    container_name: grafana-alloy
+    restart: unless-stopped
+    # Start Alloy with its HTTP UI/API on port 12345 and load
+    # the mounted River configuration file.
+    command:
+      - run
+      - --server.http.listen-addr=0.0.0.0:12345
+      - --storage.path=/var/lib/alloy/data
+      - /etc/alloy/config.alloy
+    # Provides the Grafana Cloud OTLP endpoint and authorization
+    # header to Alloy. Do not commit secrets from this file.
+    env_file:
+      - ./.env.docker
+    volumes:
+      # Mount the Alloy configuration read-only.
+      - ./config.alloy/config.alloy:/etc/alloy/config.alloy:ro
+      # Persist Alloy's internal storage across container recreation.
+      - grafana-alloy-data:/var/lib/alloy/data
+    networks:
+      - medsync-network
+
+  # ============================================================
+  # CONFIG SERVICE
+  # Centralized configuration server.
+  # ============================================================
 
   config-service:
+    # Build the selected Maven module using the shared multi-service image.
+    # Build args are consumed during image construction, not container runtime.
     build:
       context: ..
       dockerfile: deployment/docker/Dockerfile.base
@@ -100,11 +142,20 @@ services:
         SERVICE_NAME: config-service
         SERVICE: infrastructure/config-service
         SERVICE_PORT: ${CONFIG_SERVER_PORT}
+        OTEL_AGENT_VERSION: ${OTEL_AGENT_VERSION}
     container_name: config-service
     restart: unless-stopped
     environment:
       CONFIG_SERVER_PORT: ${CONFIG_SERVER_PORT}
+      # JVM heap settings for this service.
       JAVA_OPTS: "-Xms256m -Xmx512m"
+
+      # OpenTelemetry: export distributed traces to Alloy.
+      # Metrics and logs remain disabled by the Dockerfile defaults.
+      OTEL_SERVICE_NAME: config-service
+      OTEL_TRACES_EXPORTER: otlp
+      OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://grafana-alloy:4318
     networks:
       - medsync-network
     healthcheck:
@@ -113,15 +164,15 @@ services:
       timeout: 10s
       retries: 5
       start_period: 60s
-#    depends_on:
-#      patient-service-postgres:
-#        condition: service_healthy
-#      auth-service-postgres:
-#        condition: service_healthy
 
-  # ==================== DISCOVERY SERVICE ====================
+  # ============================================================
+  # DISCOVERY SERVICE
+  # Eureka service registry and discovery server.
+  # ============================================================
 
   discovery-service:
+    # Build the selected Maven module using the shared multi-service image.
+    # Build args are consumed during image construction, not container runtime.
     build:
       context: ..
       dockerfile: deployment/docker/Dockerfile.base
@@ -129,6 +180,7 @@ services:
         SERVICE_NAME: discovery-service
         SERVICE: infrastructure/discovery-service
         SERVICE_PORT: ${DISCOVERY_SERVER_PORT}
+        OTEL_AGENT_VERSION: ${OTEL_AGENT_VERSION}
     container_name: discovery-service
     restart: unless-stopped
     environment:
@@ -136,9 +188,16 @@ services:
       CONFIG_SERVER_PORT: ${CONFIG_SERVER_PORT}
       DISCOVERY_SERVER_HOSTNAME: ${DISCOVERY_SERVER_HOSTNAME}
       DISCOVERY_SERVER_PORT: ${DISCOVERY_SERVER_PORT}
+      # JVM heap settings for this service.
       JAVA_OPTS: "-Xms256m -Xmx512m"
-    #    ports:
-    #      - "8761:8761"
+
+      # OpenTelemetry: export distributed traces to Alloy.
+      # Metrics and logs remain disabled by the Dockerfile defaults.
+      OTEL_SERVICE_NAME: discovery-service
+      OTEL_TRACES_EXPORTER: otlp
+      OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://grafana-alloy:4318
+
     depends_on:
       config-service:
         condition: service_healthy
@@ -151,9 +210,14 @@ services:
       retries: 5
       start_period: 60s
 
-  # ==================== API GATEWAY ====================
+  # ============================================================
+  # API GATEWAY
+  # Public entry point for client requests.
+  # ============================================================
 
   api-gateway:
+    # Build the selected Maven module using the shared multi-service image.
+    # Build args are consumed during image construction, not container runtime.
     build:
       context: ..
       dockerfile: deployment/docker/Dockerfile.base
@@ -161,6 +225,7 @@ services:
         SERVICE_NAME: api-gateway
         SERVICE: gateway/api-gateway
         SERVICE_PORT: ${GATEWAY_SERVER_PORT}
+        OTEL_AGENT_VERSION: ${OTEL_AGENT_VERSION}
     container_name: api-gateway
     restart: unless-stopped
     environment:
@@ -170,7 +235,16 @@ services:
       DISCOVERY_SERVER_PORT: ${DISCOVERY_SERVER_PORT}
       GATEWAY_SERVER_PROFILES: ${GATEWAY_SERVER_PROFILES}
       GATEWAY_SERVER_PORT: ${GATEWAY_SERVER_PORT}
+      # JVM heap settings for this service.
       JAVA_OPTS: "-Xms256m -Xmx512m"
+
+      # OpenTelemetry distributed tracing.
+      # The shared Dockerfile defaults metrics and logs to "none".
+      OTEL_SERVICE_NAME: api-gateway
+      OTEL_TRACES_EXPORTER: otlp
+      OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://grafana-alloy:4318
+    # Publish the API Gateway to the host for local client access.
     ports:
       - "8222:8222"
     depends_on:
@@ -180,6 +254,7 @@ services:
         condition: service_healthy
     networks:
       - medsync-network
+    # Container readiness check against Spring Boot Actuator.
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:8222/actuator/health" ]
       interval: 30s
@@ -187,9 +262,14 @@ services:
       retries: 5
       start_period: 60s
 
-  # ==================== AUTH SERVICE ====================
+  # ============================================================
+  # AUTH SERVICE
+  # Authentication and token-related operations.
+  # ============================================================
 
   auth-service:
+    # Build the selected Maven module using the shared multi-service image.
+    # Build args are consumed during image construction, not container runtime.
     build:
       context: ..
       dockerfile: deployment/docker/Dockerfile.base
@@ -197,10 +277,9 @@ services:
         SERVICE_NAME: auth-service
         SERVICE: services/auth-service
         SERVICE_PORT: ${AUTH_SERVER_PORT}
+        OTEL_AGENT_VERSION: ${OTEL_AGENT_VERSION}
     container_name: auth-service
     restart: unless-stopped
-    env_file:
-      - ./.env
     environment:
       AUTH_SERVER_DB_URL: ${AUTH_SERVER_DB_URL}
       AUTH_SERVER_DB_USERNAME: ${AUTH_SERVER_DB_USERNAME}
@@ -224,10 +303,15 @@ services:
       DISCOVERY_SERVER_HOSTNAME: ${DISCOVERY_SERVER_HOSTNAME}
       DISCOVERY_SERVER_PORT: ${DISCOVERY_SERVER_PORT}
 
+      # JVM heap settings for this service.
       JAVA_OPTS: "-Xms256m -Xmx512m"
 
-    #    ports:
-    #      - "8001:8001"
+      # OpenTelemetry distributed tracing.
+      # The shared Dockerfile defaults metrics and logs to "none".
+      OTEL_SERVICE_NAME: auth-service
+      OTEL_TRACES_EXPORTER: otlp
+      OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://grafana-alloy:4318
 
     depends_on:
       auth-service-postgres:
@@ -247,9 +331,14 @@ services:
       retries: 5
       start_period: 60s
 
-  # ==================== PATIENT SERVICE ====================
+  # ============================================================
+  # PATIENT SERVICE
+  # Patient-related business operations.
+  # ============================================================
 
   patient-service:
+    # Build the selected Maven module using the shared multi-service image.
+    # Build args are consumed during image construction, not container runtime.
     build:
       context: ..
       dockerfile: deployment/docker/Dockerfile.base
@@ -257,10 +346,9 @@ services:
         SERVICE_NAME: patient-service
         SERVICE: services/patient-service
         SERVICE_PORT: ${PATIENT_SERVER_PORT}
+        OTEL_AGENT_VERSION: ${OTEL_AGENT_VERSION}
     container_name: patient-service
     restart: unless-stopped
-    env_file:
-      - ./.env
     environment:
       PATIENT_SERVER_DB_URL: ${PATIENT_SERVER_DB_URL}
       PATIENT_SERVER_DB_USERNAME: ${PATIENT_SERVER_DB_USERNAME}
@@ -278,9 +366,16 @@ services:
       DISCOVERY_SERVER_HOSTNAME: ${DISCOVERY_SERVER_HOSTNAME}
       DISCOVERY_SERVER_PORT: ${DISCOVERY_SERVER_PORT}
 
+      # JVM heap settings for this service.
       JAVA_OPTS: "-Xms256m -Xmx512m"
-    #    ports:
-    #      - "8002:8002"
+
+      # OpenTelemetry distributed tracing.
+      # The shared Dockerfile defaults metrics and logs to "none".
+      OTEL_SERVICE_NAME: patient-service
+      OTEL_TRACES_EXPORTER: otlp
+      OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://grafana-alloy:4318
+
     depends_on:
       patient-service-postgres:
         condition: service_healthy
@@ -299,9 +394,14 @@ services:
       retries: 5
       start_period: 60s
 
-    # ========================= DOCTOR SERVICE ====================
+  # ============================================================
+  # DOCTOR SERVICE
+  # Doctor-related business operations.
+  # ============================================================
 
   doctor-service:
+    # Build the selected Maven module using the shared multi-service image.
+    # Build args are consumed during image construction, not container runtime.
     build:
       context: ..
       dockerfile: deployment/docker/Dockerfile.base
@@ -309,10 +409,9 @@ services:
         SERVICE_NAME: doctor-service
         SERVICE: services/doctor-service
         SERVICE_PORT: ${DOCTOR_SERVER_PORT}
+        OTEL_AGENT_VERSION: ${OTEL_AGENT_VERSION}
     container_name: doctor-service
     restart: unless-stopped
-    env_file:
-      - ./.env
     environment:
       DOCTOR_SERVER_DB_URL: ${DOCTOR_SERVER_DB_URL}
       DOCTOR_SERVER_DB_USERNAME: ${DOCTOR_SERVER_DB_USERNAME}
@@ -328,9 +427,15 @@ services:
       CONFIG_SERVER_PORT: ${CONFIG_SERVER_PORT}
       DISCOVERY_SERVER_HOSTNAME: ${DISCOVERY_SERVER_HOSTNAME}
       DISCOVERY_SERVER_PORT: ${DISCOVERY_SERVER_PORT}
+      # JVM heap settings for this service.
       JAVA_OPTS: "-Xms256m -Xmx512m"
-    #    ports:
-    #      - "8003:8003"
+
+      # OpenTelemetry distributed tracing.
+      # The shared Dockerfile defaults metrics and logs to "none".
+      OTEL_SERVICE_NAME: doctor-service
+      OTEL_TRACES_EXPORTER: otlp
+      OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://grafana-alloy:4318
     depends_on:
       doctor-service-postgres:
         condition: service_healthy
@@ -349,9 +454,14 @@ services:
       retries: 5
       start_period: 60s
 
-  # ========================= APPOINTMENT SERVICE ====================
+  # ============================================================
+  # APPOINTMENT SERVICE
+  # Appointment-related business operations.
+  # ============================================================
 
   appointment-service:
+    # Build the selected Maven module using the shared multi-service image.
+    # Build args are consumed during image construction, not container runtime.
     build:
       context: ..
       dockerfile: deployment/docker/Dockerfile.base
@@ -359,10 +469,9 @@ services:
         SERVICE_NAME: appointment-service
         SERVICE: services/appointment-service
         SERVICE_PORT: ${APPOINTMENT_SERVER_PORT}
+        OTEL_AGENT_VERSION: ${OTEL_AGENT_VERSION}
     container_name: appointment-service
     restart: unless-stopped
-    env_file:
-      - ./.env
     environment:
       APPOINTMENT_SERVER_DB_URL: ${APPOINTMENT_SERVER_DB_URL}
       APPOINTMENT_SERVER_DB_USERNAME: ${APPOINTMENT_SERVER_DB_USERNAME}
@@ -377,9 +486,16 @@ services:
       DISCOVERY_SERVER_HOSTNAME: ${DISCOVERY_SERVER_HOSTNAME}
       DISCOVERY_SERVER_PORT: ${DISCOVERY_SERVER_PORT}
 
+      # JVM heap settings for this service.
       JAVA_OPTS: "-Xms256m -Xmx512m"
-    #    ports:
-    #      - "8004:8004"
+
+      # OpenTelemetry distributed tracing.
+      # The shared Dockerfile defaults metrics and logs to "none".
+      OTEL_SERVICE_NAME: appointment-service
+      OTEL_TRACES_EXPORTER: otlp
+      OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://grafana-alloy:4318
+
     depends_on:
       appointment-service-postgres:
         condition: service_healthy
@@ -402,15 +518,22 @@ services:
       retries: 5
       start_period: 60s
 
-# ==================== VOLUMES ====================
+# ============================================================
+# NAMED VOLUMES
+# Persist database data and Alloy internal storage.
+# ============================================================
 
 volumes:
   patient-service-postgres-volume:
   auth-service-postgres-volume:
   appointment-service-postgres-volume:
   doctor-service-postgres-volume:
+  grafana-alloy-data:
 
-# ==================== NETWORKS ====================
+# ============================================================
+# NETWORKS
+# Services communicate through this private Docker bridge network.
+# ============================================================
 
 networks:
   medsync-network:
