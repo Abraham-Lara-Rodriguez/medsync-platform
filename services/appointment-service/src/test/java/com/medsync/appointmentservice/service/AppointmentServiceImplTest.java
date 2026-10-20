@@ -79,8 +79,7 @@ class AppointmentServiceImplTest {
                 a.getId(), a.getPatientId(), a.getDoctorId(),
                 a.getAppointmentDate(), a.getStartTime(), a.getEndTime(),
                 a.getType(), a.getStatus(),
-                a.getReason(), a.getNotes(),
-                a.getCreatedAt(), a.getUpdatedAt()
+                a.getReason(), a.getNotes()
         );
     }
 

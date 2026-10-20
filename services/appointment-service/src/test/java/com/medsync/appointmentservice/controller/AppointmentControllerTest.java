@@ -14,7 +14,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -24,7 +23,6 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -53,8 +51,7 @@ class AppointmentControllerTest {
                 LocalDate.now().plusDays(1), LocalTime.of(10, 0), LocalTime.of(10, 30),
                 com.medsync.appointmentservice.domain.enums.AppointmentType.GENERAL,
                 com.medsync.appointmentservice.domain.enums.AppointmentStatus.SCHEDULED,
-                "Checkup", "Notes",
-                java.time.Instant.now(), java.time.Instant.now()
+                "Checkup", "Notes"
         );
     }
 

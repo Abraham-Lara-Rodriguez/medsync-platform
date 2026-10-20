@@ -41,8 +41,6 @@ class AppointmentMapperTest {
         assertThat(response.status()).isEqualTo(appointment.getStatus());
         assertThat(response.reason()).isEqualTo(appointment.getReason());
         assertThat(response.notes()).isEqualTo(appointment.getNotes());
-        assertThat(response.createdAt()).isEqualTo(appointment.getCreatedAt());
-        assertThat(response.updatedAt()).isEqualTo(appointment.getUpdatedAt());
     }
 
     @Test

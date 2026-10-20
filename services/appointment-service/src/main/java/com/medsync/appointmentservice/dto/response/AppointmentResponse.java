@@ -21,9 +21,6 @@ public record AppointmentResponse(
         AppointmentStatus status,
 
         String reason,
-        String notes,
-
-        Instant createdAt,
-        Instant updatedAt
+        String notes
 ) {
 }
