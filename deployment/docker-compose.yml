@@ -12,8 +12,6 @@ services:
     image: postgres:18
     container_name: patient-service-postgres
     restart: unless-stopped
-    env_file:
-      - ./.env
     environment:
       POSTGRES_DB: ${PATIENT_SERVER_DB_NAME}
       POSTGRES_USER: ${PATIENT_SERVER_DB_USERNAME}
@@ -35,8 +33,6 @@ services:
     image: postgres:18
     container_name: auth-service-postgres
     restart: unless-stopped
-    env_file:
-      - ./.env
     environment:
       POSTGRES_DB: ${AUTH_SERVER_DB_NAME}
       POSTGRES_USER: ${AUTH_SERVER_DB_USERNAME}
@@ -57,8 +53,6 @@ services:
     image: postgres:18
     container_name: appointment-service-postgres
     restart: unless-stopped
-    env_file:
-      - ./.env
     environment:
       POSTGRES_DB: ${APPOINTMENT_SERVER_DB_NAME}
       POSTGRES_USER: ${APPOINTMENT_SERVER_DB_USERNAME}
@@ -79,8 +73,6 @@ services:
     image: postgres:18
     container_name: doctor-service-postgres
     restart: unless-stopped
-    env_file:
-      - ./.env
     environment:
       POSTGRES_DB: ${DOCTOR_SERVER_DB_NAME}
       POSTGRES_USER: ${DOCTOR_SERVER_DB_USERNAME}
@@ -157,8 +149,8 @@ services:
       OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
       OTEL_EXPORTER_OTLP_ENDPOINT: http://grafana-alloy:4318
 
-      CONFIG_SERVER_USER: ${CONFIG_SERVER_USER}
-      CONFIG_SERVER_PASSWORD: ${CONFIG_SERVER_PASSWORD}
+      SERVER_USER: ${SERVER_USER}
+      SERVER_PASSWORD: ${SERVER_PASSWORD}
     networks:
       - medsync-network
     healthcheck:
@@ -201,6 +193,8 @@ services:
       OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
       OTEL_EXPORTER_OTLP_ENDPOINT: http://grafana-alloy:4318
 
+      SERVER_USER: ${SERVER_USER}
+      SERVER_PASSWORD: ${SERVER_PASSWORD}
     depends_on:
       config-service:
         condition: service_healthy

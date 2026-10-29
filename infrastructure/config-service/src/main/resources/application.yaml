@@ -5,8 +5,8 @@ spring:
     active: native
   security:
     user:
-      name: ${CONFIG_SERVER_USER}
-      password: ${CONFIG_SERVER_PASSWORD}
+      name: ${SERVER_USER}
+      password: ${SERVER_PASSWORD}
   config:
     import: classpath:./config/common/application.yaml
   cloud:

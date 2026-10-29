@@ -1,15 +1,28 @@
+spring:
+  cache:
+    caffeine:
+      spec: maximumSize=500,expireAfterWrite=5m
+
 logging:
   level:
     com.medsync.discoveryservice: info
 
 eureka:
   instance:
-    hostname: ${DISCOVERY_SERVER_HOSTNAME:localhost}
+    hostname: ${DISCOVERY_SERVER_HOSTNAME}
   client:
     registerWithEureka: false
     fetchRegistry: false
     serviceUrl:
+      # TODO: future-proof for Kubernetes deployment
+      #   - This is a single-node standalone Eureka server, so the WARN
+      #     "The replica size seems to be empty. Check the route 53 DNS Registry" is expected.
+      #   - In a Kubernetes HA deployment with multiple replicas, register the full peer list via
+      #     eureka.client.serviceUrl.defaultZone (e.g. using a StatefulSet + headless service DNS)
+      #     so Eureka forms a replication ring and this warning goes away.
+      #   - To silence the warning while still standalone, set:
+      #       logging.level.com.netflix.eureka.cluster.PeerEurekaNodes: ERROR
       defaultZone: http://${eureka.instance.hostname}:${server.port}/eureka/
 
 server:
-  port: ${DISCOVERY_SERVER_PORT:8761}
+  port: ${DISCOVERY_SERVER_PORT}
