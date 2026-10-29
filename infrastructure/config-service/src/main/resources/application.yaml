@@ -3,6 +3,10 @@ spring:
     name: config-service
   profiles:
     active: native
+  security:
+    user:
+      name: ${CONFIG_SERVER_USER}
+      password: ${CONFIG_SERVER_PASSWORD}
   config:
     import: classpath:./config/common/application.yaml
   cloud:
@@ -14,8 +18,4 @@ spring:
             - classpath:./config/{application}
 
 server:
-  port: ${CONFIG_SERVER_PORT:8888}
-
-logging:
-  level:
-    org.springframework.cloud.config.server.environment.NativeEnvironmentRepository: WARN
+  port: ${CONFIG_SERVER_PORT}

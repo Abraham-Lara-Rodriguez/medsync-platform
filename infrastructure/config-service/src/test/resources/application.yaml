@@ -1,0 +1,21 @@
+spring:
+  application:
+    name: config-service
+  profiles:
+    active: native
+  security:
+    user:
+      name: test
+      password: test
+  config:
+    import: classpath:./config/common/application.yaml
+  cloud:
+    config:
+      server:
+        native:
+          search-locations:
+            - classpath:./config/common
+            - classpath:./config/{application}
+
+server:
+  port: 8888
