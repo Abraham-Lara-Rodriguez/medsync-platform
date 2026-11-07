@@ -1,7 +1,7 @@
 package com.medsync.authservice.security.userdetails;
 
 import com.medsync.authservice.domain.entity.User;
-import com.medsync.authservice.domain.enums.UserStatus;
+import com.medsync.authservice.domain.enums.user.UserStatus;
 import com.medsync.authservice.repository.user.UserRepository;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;

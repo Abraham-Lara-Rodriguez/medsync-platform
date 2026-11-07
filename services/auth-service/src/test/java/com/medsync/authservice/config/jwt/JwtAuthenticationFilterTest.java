@@ -9,6 +9,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -45,6 +47,40 @@ class JwtAuthenticationFilterTest {
     private Claims claims;
 
     private JwtAuthenticationFilter filter;
+
+    @ParameterizedTest
+    @ValueSource(strings = {"disabled", "locked", "expired", "credentialsExpired"})
+    void restrictedAccountIsRejected(String state) throws Exception {
+        UserDetails details = User.withUsername("user@medsync.com").password("pwd")
+                .authorities("ROLE_PATIENT").disabled(state.equals("disabled"))
+                .accountLocked(state.equals("locked")).accountExpired(state.equals("expired"))
+                .credentialsExpired(state.equals("credentialsExpired")).build();
+        when(request.getHeader("Authorization")).thenReturn("Bearer token");
+        when(jwtService.parse("token")).thenReturn(claims);
+        when(claims.get("type", String.class)).thenReturn("access");
+        when(claims.getSubject()).thenReturn("user@medsync.com");
+        when(userDetailsService.loadUserByUsername("user@medsync.com")).thenReturn(details);
+
+        filter.doFilterInternal(request, response, filterChain);
+
+        verify(response).setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        verifyNoInteractions(filterChain);
+        assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
+    }
+
+    @Test
+    void deletedAccountIsRejected() throws Exception {
+        when(request.getHeader("Authorization")).thenReturn("Bearer token");
+        when(jwtService.parse("token")).thenReturn(claims);
+        when(claims.get("type", String.class)).thenReturn("access");
+        when(claims.getSubject()).thenReturn("deleted@medsync.com");
+        when(userDetailsService.loadUserByUsername("deleted@medsync.com"))
+                .thenThrow(new org.springframework.security.core.userdetails.UsernameNotFoundException("Missing"));
+        filter.doFilterInternal(request, response, filterChain);
+        verify(response).setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        verifyNoInteractions(filterChain);
+        assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
+    }
 
     @BeforeEach
     void setUp() {

@@ -1,122 +1,183 @@
 package com.medsync.authservice.service.auth;
 
 import com.medsync.authservice.config.jwt.JwtService;
-import com.medsync.authservice.dto.auth.request.AuthRequest;
-import com.medsync.authservice.dto.auth.response.AuthResponse;
+import com.medsync.authservice.domain.entity.RefreshToken;
+import com.medsync.authservice.domain.entity.User;
+import com.medsync.authservice.domain.enums.auth.Role;
+import com.medsync.authservice.dto.auth.request.*;
 import com.medsync.authservice.exception.custom.InvalidTokenException;
+import com.medsync.authservice.repository.auth.RefreshTokenRepository;
+import com.medsync.authservice.repository.user.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Mock;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.userdetails.User;
+import org.springframework.security.authentication.*;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
-
-import java.util.List;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import java.time.Instant;
+import java.util.Optional;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class AuthServiceImplTest {
-
-    @Mock
-    private AuthenticationManager authenticationManager;
-    @Mock
-    private JwtService jwtService;
-    @Mock
-    private UserDetailsService userDetailsService;
-
-    private AuthServiceImpl authService;
+    private static final String EMAIL = "user@medsync.com";
+    @Mock private AuthenticationManager authenticationManager;
+    @Mock private JwtService jwtService;
+    @Mock private UserDetailsService userDetailsService;
+    @Mock private RefreshTokenRepository tokens;
+    @Mock private UserRepository users;
+    private AuthServiceImpl service;
+    private User user;
 
     @BeforeEach
     void setUp() {
-        authService = new AuthServiceImpl(authenticationManager, jwtService, userDetailsService);
+        service = new AuthServiceImpl(authenticationManager, jwtService, userDetailsService, tokens, users);
+        user = User.create(EMAIL, "encoded", Role.PATIENT);
     }
 
-    @Nested
-    @DisplayName("login")
-    class Login {
-
-        @Test
-        @DisplayName("authenticates credentials and returns access + refresh tokens")
-        void loginSuccess() {
-            AuthRequest request = new AuthRequest("user@medsync.com", "secret");
-            UserDetails userDetails = new User("user@medsync.com", "encoded", List.of());
-
-            when(userDetailsService.loadUserByUsername("user@medsync.com")).thenReturn(userDetails);
-            when(jwtService.generateAccessToken(userDetails)).thenReturn("access-token");
-            when(jwtService.generateRefreshToken(userDetails)).thenReturn("refresh-token");
-
-            AuthResponse response = authService.login(request);
-
-            assertThat(response.accessToken()).isEqualTo("access-token");
-            assertThat(response.refreshToken()).isEqualTo("refresh-token");
-
-            ArgumentCaptor<UsernamePasswordAuthenticationToken> captor =
-                    ArgumentCaptor.forClass(UsernamePasswordAuthenticationToken.class);
-            verify(authenticationManager).authenticate(captor.capture());
-            assertThat(captor.getValue().getPrincipal()).isEqualTo("user@medsync.com");
-            assertThat(captor.getValue().getCredentials()).isEqualTo("secret");
-        }
-
-        @Test
-        @DisplayName("propagates BadCredentialsException without generating tokens")
-        void loginFailsWithBadCredentials() {
-            AuthRequest request = new AuthRequest("user@medsync.com", "wrong-password");
-            doThrow(new BadCredentialsException("Bad credentials"))
-                    .when(authenticationManager).authenticate(any());
-
-            assertThatThrownBy(() -> authService.login(request))
-                    .isInstanceOf(BadCredentialsException.class);
-
-            verifyNoInteractions(jwtService);
-            verify(userDetailsService, never()).loadUserByUsername(anyString());
-        }
+    @Test
+    void loginPersistsRefreshToken() {
+        UserDetails details = details("active");
+        Instant expiry = Instant.now().plusSeconds(3600);
+        when(users.findByEmail(EMAIL)).thenReturn(Optional.of(user));
+        when(userDetailsService.loadUserByUsername(EMAIL)).thenReturn(details);
+        when(jwtService.generateAccessToken(details)).thenReturn("access");
+        when(jwtService.generateRefreshToken(details)).thenReturn("refresh");
+        when(jwtService.getRefreshTokenExpiryDate()).thenReturn(expiry);
+        var result = service.login(new AuthRequest(EMAIL, "password"));
+        assertThat(result.accessToken()).isEqualTo("access");
+        assertThat(result.refreshToken()).isEqualTo("refresh");
+        ArgumentCaptor<RefreshToken> saved = ArgumentCaptor.forClass(RefreshToken.class);
+        verify(tokens).save(saved.capture());
+        assertThat(saved.getValue().getToken()).isEqualTo("refresh");
+        assertThat(saved.getValue().getUser()).isSameAs(user);
+        assertThat(saved.getValue().getExpiresAt()).isEqualTo(expiry);
+        assertThat(saved.getValue().isRevoked()).isFalse();
+        verify(authenticationManager).authenticate(any());
     }
 
-    @Nested
-    @DisplayName("refreshToken")
-    class RefreshTokenTests {
+    @Test
+    void wrongPasswordDoesNotIssueOrPersistTokens() {
+        when(authenticationManager.authenticate(any())).thenThrow(new BadCredentialsException("Invalid"));
+        assertThatThrownBy(() -> service.login(new AuthRequest(EMAIL, "wrong")))
+                .isInstanceOf(BadCredentialsException.class);
+        verifyNoInteractions(jwtService, tokens, userDetailsService, users);
+    }
 
-        @Test
-        @DisplayName("issues a new access token and keeps the same refresh token when valid")
-        void refreshSuccess() {
-            UserDetails userDetails = new User("user@medsync.com", "encoded", List.of());
+    @Test
+    void disabledAccountCannotLoginOrReachTokenPersistence() {
+        when(authenticationManager.authenticate(any())).thenThrow(new DisabledException("Disabled"));
+        assertThatThrownBy(() -> service.login(new AuthRequest(EMAIL, "password")))
+                .isInstanceOf(DisabledException.class);
+        verifyNoInteractions(jwtService, tokens, userDetailsService, users);
+    }
 
-            when(jwtService.isRefreshTokenValid("valid-refresh")).thenReturn(true);
-            when(jwtService.extractUsername("valid-refresh")).thenReturn("user@medsync.com");
-            when(userDetailsService.loadUserByUsername("user@medsync.com")).thenReturn(userDetails);
-            when(jwtService.generateAccessToken(userDetails)).thenReturn("new-access-token");
+    @Test
+    void refreshRotatesAndRejectsReuse() {
+        RefreshToken stored = stored(false, false);
+        stubStored(stored);
+        UserDetails details = details("active");
+        when(jwtService.extractUsername("old")).thenReturn(EMAIL);
+        when(userDetailsService.loadUserByUsername(EMAIL)).thenReturn(details);
+        when(jwtService.generateAccessToken(details)).thenReturn("new-access");
+        when(jwtService.generateRefreshToken(details)).thenReturn("new-refresh");
+        Instant expiry = Instant.now().plusSeconds(7200);
+        when(jwtService.getRefreshTokenExpiryDate()).thenReturn(expiry);
+        var result = service.refreshToken(new RefreshTokenRequest("old"));
+        assertThat(result.accessToken()).isEqualTo("new-access");
+        assertThat(result.refreshToken()).isEqualTo("new-refresh");
+        assertThat(stored.isRevoked()).isTrue();
+        ArgumentCaptor<RefreshToken> saved = ArgumentCaptor.forClass(RefreshToken.class);
+        verify(tokens, times(2)).save(saved.capture());
+        RefreshToken replacement = saved.getAllValues().get(1);
+        assertThat(replacement.getToken()).isEqualTo("new-refresh");
+        assertThat(replacement.getUser()).isSameAs(user);
+        assertThat(replacement.getExpiresAt()).isEqualTo(expiry);
+        assertThat(replacement.isRevoked()).isFalse();
+        assertThatThrownBy(() -> service.refreshToken(new RefreshTokenRequest("old")))
+                .isInstanceOf(InvalidTokenException.class);
+        verify(jwtService, times(1)).generateRefreshToken(any());
+    }
 
-            AuthResponse response = authService.refreshToken("valid-refresh");
+    @ParameterizedTest
+    @ValueSource(strings = {"disabled", "locked", "expired", "credentialsExpired"})
+    void restrictedAccountCannotRefresh(String state) {
+        RefreshToken stored = stored(false, false);
+        stubStored(stored);
+        when(jwtService.extractUsername("old")).thenReturn(EMAIL);
+        when(userDetailsService.loadUserByUsername(EMAIL)).thenReturn(details(state));
+        assertThatThrownBy(() -> service.refreshToken(new RefreshTokenRequest("old")))
+                .isInstanceOf(AccountStatusException.class);
+        assertThat(stored.isRevoked()).isFalse();
+        verify(tokens, never()).save(any());
+        verify(jwtService, never()).generateAccessToken(any());
+        verify(jwtService, never()).generateRefreshToken(any());
+    }
 
-            assertThat(response.accessToken()).isEqualTo("new-access-token");
-            assertThat(response.refreshToken()).isEqualTo("valid-refresh");
-            verify(jwtService, never()).generateRefreshToken(any());
-        }
+    @Test
+    void invalidJwtDoesNotReachDatabase() {
+        when(jwtService.isRefreshTokenValid("bad")).thenReturn(false);
+        assertThatThrownBy(() -> service.refreshToken(new RefreshTokenRequest("bad")))
+                .isInstanceOf(InvalidTokenException.class);
+        verifyNoInteractions(tokens, userDetailsService);
+    }
 
-        @Test
-        @DisplayName("throws InvalidTokenException when the refresh token is not valid")
-        void refreshFailsWithInvalidToken() {
-            when(jwtService.isRefreshTokenValid("bad-token")).thenReturn(false);
+    @Test
+    void unknownTokenIsRejected() {
+        when(jwtService.isRefreshTokenValid("old")).thenReturn(true);
+        when(tokens.findByToken("old")).thenReturn(Optional.empty());
+        assertThatThrownBy(() -> service.refreshToken(new RefreshTokenRequest("old")))
+                .isInstanceOf(InvalidTokenException.class);
+        verify(jwtService, never()).generateAccessToken(any());
+    }
 
-            assertThatThrownBy(() -> authService.refreshToken("bad-token"))
-                    .isInstanceOf(InvalidTokenException.class)
-                    .hasMessage("Invalid refresh token");
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void revokedOrExpiredTokenIsRejected(boolean revoked) {
+        stubStored(stored(revoked, !revoked));
+        assertThatThrownBy(() -> service.refreshToken(new RefreshTokenRequest("old")))
+                .isInstanceOf(InvalidTokenException.class);
+        verify(jwtService, never()).generateAccessToken(any());
+        verify(jwtService, never()).generateRefreshToken(any());
+    }
 
-            verify(jwtService, never()).extractUsername(any());
-            verifyNoInteractions(userDetailsService);
-        }
+    @Test
+    void logoutIsIdempotentAndBlocksRefresh() {
+        RefreshToken stored = stored(false, false);
+        stubStored(stored);
+        service.logout(new LogoutRequest("old"));
+        service.logout(new LogoutRequest("old"));
+        assertThat(stored.isRevoked()).isTrue();
+        verify(tokens, times(1)).save(stored);
+        assertThatThrownBy(() -> service.refreshToken(new RefreshTokenRequest("old")))
+                .isInstanceOf(InvalidTokenException.class);
+        verify(jwtService, never()).generateRefreshToken(any());
+    }
+
+    @Test
+    void logoutOfUnknownTokenDoesNothing() {
+        when(tokens.findByToken("missing")).thenReturn(Optional.empty());
+        assertThatCode(() -> service.logout(new LogoutRequest("missing"))).doesNotThrowAnyException();
+        verify(tokens, never()).save(any());
+    }
+
+    private RefreshToken stored(boolean revoked, boolean expired) {
+        return RefreshToken.create(user, "old", revoked, Instant.now().plusSeconds(expired ? -60 : 3600));
+    }
+    private void stubStored(RefreshToken token) {
+        when(jwtService.isRefreshTokenValid("old")).thenReturn(true);
+        when(tokens.findByToken("old")).thenReturn(Optional.of(token));
+    }
+    private UserDetails details(String state) {
+        return org.springframework.security.core.userdetails.User.withUsername(EMAIL).password("encoded")
+                .authorities("ROLE_PATIENT").disabled(state.equals("disabled"))
+                .accountLocked(state.equals("locked")).accountExpired(state.equals("expired"))
+                .credentialsExpired(state.equals("credentialsExpired")).build();
     }
 }

@@ -1,4 +1,4 @@
-package com.medsync.authservice.domain.enums;
+package com.medsync.authservice.domain.enums.user;
 
 public enum UserStatus {
     ACTIVE,

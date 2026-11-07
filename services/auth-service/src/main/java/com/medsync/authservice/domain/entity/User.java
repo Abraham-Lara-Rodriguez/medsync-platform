@@ -1,8 +1,8 @@
 package com.medsync.authservice.domain.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.medsync.authservice.domain.enums.Role;
-import com.medsync.authservice.domain.enums.UserStatus;
+import com.medsync.authservice.domain.enums.auth.Role;
+import com.medsync.authservice.domain.enums.user.UserStatus;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

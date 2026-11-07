@@ -52,7 +52,7 @@ class GlobalExceptionHandlerTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().code()).isEqualTo(ErrorCode.BAD_REQUEST);
-        assertThat(response.getBody().detail()).isEqualTo(ex.getMessage());
+        assertThat(response.getBody().detail()).isEqualTo("Invalid request body or parameter.");
         assertThat(response.getBody().type()).endsWith("/bad-request");
     }
 

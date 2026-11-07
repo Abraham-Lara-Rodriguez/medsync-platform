@@ -1,7 +1,7 @@
 package com.medsync.authservice.bootstrap;
 
 import com.medsync.authservice.domain.entity.User;
-import com.medsync.authservice.domain.enums.Role;
+import com.medsync.authservice.domain.enums.auth.Role;
 import com.medsync.authservice.repository.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

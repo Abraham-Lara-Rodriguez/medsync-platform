@@ -47,7 +47,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    @Transactional()
+    @Transactional
     public UserResponse createUser(CreateUserRequest request) {
         if (userRepository.existsByEmail(request.email())) {
             throw new DuplicateResourceException("Email already exists: " + request.email());
@@ -58,7 +58,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    @Transactional()
+    @Transactional
     public UserResponse updateUser(UUID id, UpdateUserRequest request) {
         return userMapper.toResponse(userRepository.save(updateDataFromDto(findByIdOrThrow(id), request)));
     }

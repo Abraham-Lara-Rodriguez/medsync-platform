@@ -1,7 +1,8 @@
 package com.medsync.authservice.security.userdetails;
 
 import com.medsync.authservice.domain.entity.User;
-import com.medsync.authservice.domain.enums.Role;
+import com.medsync.authservice.domain.enums.auth.Role;
+import com.medsync.authservice.domain.enums.user.UserStatus;
 import com.medsync.authservice.repository.user.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -64,7 +65,7 @@ class UserDetailsServiceImplTest {
     @DisplayName("returns disabled and locked UserDetails for an INACTIVE user")
     void returnsDisabledUserDetailsForInactiveUser() {
         User user = User.create("inactive@medsync.com", "encoded-pwd", Role.RECEPTIONIST);
-        user.changeStatus(com.medsync.authservice.domain.enums.UserStatus.INACTIVE);
+        user.changeStatus(UserStatus.INACTIVE);
         when(userRepository.findByEmail("inactive@medsync.com")).thenReturn(Optional.of(user));
 
         UserDetails details = service.loadUserByUsername("inactive@medsync.com");

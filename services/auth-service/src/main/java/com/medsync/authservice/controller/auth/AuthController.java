@@ -1,6 +1,7 @@
 package com.medsync.authservice.controller.auth;
 
 import com.medsync.authservice.dto.auth.request.AuthRequest;
+import com.medsync.authservice.dto.auth.request.LogoutRequest;
 import com.medsync.authservice.dto.auth.request.RefreshTokenRequest;
 import com.medsync.authservice.dto.auth.response.AuthResponse;
 import com.medsync.authservice.service.auth.AuthService;
@@ -26,11 +27,16 @@ public class AuthController {
         return ResponseEntity.ok(authService.login(loginRequest));
     }
 
-
     @Operation(summary = "Refresh JWT tokens using a valid refresh token")
     @PostMapping("/refresh-token")
     public ResponseEntity<AuthResponse> refreshToken(@Valid @RequestBody RefreshTokenRequest refreshToken) {
-        return ResponseEntity.ok(authService.refreshToken(refreshToken.refreshToken()));
+        return ResponseEntity.ok(authService.refreshToken(refreshToken));
     }
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(@Valid @RequestBody LogoutRequest request) {
+        authService.logout(request);
+        return ResponseEntity.noContent().build();
+    }
+    
 
 }

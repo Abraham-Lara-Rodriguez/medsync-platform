@@ -1,8 +1,8 @@
 package com.medsync.authservice.controller.user;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.medsync.authservice.domain.enums.Role;
-import com.medsync.authservice.domain.enums.UserStatus;
+import com.medsync.authservice.domain.enums.auth.Role;
+import com.medsync.authservice.domain.enums.user.UserStatus;
 import com.medsync.authservice.dto.user.request.CreateUserRequest;
 import com.medsync.authservice.dto.user.request.UpdateUserRequest;
 import com.medsync.authservice.dto.user.response.UserResponse;

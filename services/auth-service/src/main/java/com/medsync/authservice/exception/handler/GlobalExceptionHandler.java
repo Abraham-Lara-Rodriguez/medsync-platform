@@ -8,6 +8,11 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.OptimisticLockingFailureException;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
+import org.springframework.http.HttpHeaders;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -41,7 +46,30 @@ public class GlobalExceptionHandler extends AbstractGlobalExceptionHandler {
 
     @ExceptionHandler({MethodArgumentTypeMismatchException.class, HttpMessageNotReadableException.class, IllegalArgumentException.class})
     public ResponseEntity<ProblemDetails> handleBadRequest(Exception ex, HttpServletRequest req) {
-        return problem(HttpStatus.BAD_REQUEST, BASE_TYPE + "/bad-request", ex.getMessage(), req, ErrorCode.BAD_REQUEST);
+        return problem(HttpStatus.BAD_REQUEST, BASE_TYPE + "/bad-request", "Invalid request body or parameter.", req, ErrorCode.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<ProblemDetails> handleMethodNotAllowed(HttpRequestMethodNotSupportedException ex, HttpServletRequest req) {
+        HttpHeaders headers = new HttpHeaders();
+        if (ex.getSupportedHttpMethods() != null) {
+            headers.setAllow(ex.getSupportedHttpMethods());
+        }
+        return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).headers(headers)
+                .body(buildProblem(BASE_TYPE + "/method-not-allowed", HttpStatus.METHOD_NOT_ALLOWED,
+                        "HTTP method is not supported for this endpoint.", req, ErrorCode.BAD_REQUEST));
+    }
+
+    @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
+    public ResponseEntity<ProblemDetails> handleUnsupportedMediaType(HttpMediaTypeNotSupportedException ex, HttpServletRequest req) {
+        return problem(HttpStatus.UNSUPPORTED_MEDIA_TYPE, BASE_TYPE + "/unsupported-media-type",
+                "Content-Type is not supported for this endpoint.", req, ErrorCode.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(OptimisticLockingFailureException.class)
+    public ResponseEntity<ProblemDetails> handleConcurrentModification(OptimisticLockingFailureException ex, HttpServletRequest req) {
+        return problem(HttpStatus.CONFLICT, BASE_TYPE + "/concurrent-modification",
+                "The resource was modified by another request. Reload its state before continuing.", req, ErrorCode.CONFLICT);
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)
@@ -58,8 +86,7 @@ public class GlobalExceptionHandler extends AbstractGlobalExceptionHandler {
 
     @ExceptionHandler(AuthenticationException.class)
     public ResponseEntity<ProblemDetails> handleAuthenticationException(AuthenticationException ex, HttpServletRequest req) {
-        log.warn("Authentication failed: {}", ex.getMessage());
-        return problem(HttpStatus.UNAUTHORIZED, BASE_TYPE + "/authentication-failed", "Authentication failed", req, ErrorCode.UNAUTHORIZED);
+        return handleBadCredentials(new BadCredentialsException("Invalid username or password."), req);
     }
 
 }
