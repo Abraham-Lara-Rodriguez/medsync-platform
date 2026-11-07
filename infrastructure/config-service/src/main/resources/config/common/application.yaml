@@ -30,7 +30,7 @@ management:
 eureka:
   client:
     serviceUrl:
-      defaultZone: http://${DISCOVERY_SERVER_HOSTNAME}:${DISCOVERY_SERVER_PORT}/eureka/
+      defaultZone: http://${SERVER_USER}:${SERVER_PASSWORD}@${DISCOVERY_SERVER_HOSTNAME}:${DISCOVERY_SERVER_PORT}/eureka/
 
 medsync:
   security:

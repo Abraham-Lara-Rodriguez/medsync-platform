@@ -22,7 +22,7 @@
     <!-- Project properties -->
     <properties>
         <java.version>17</java.version>
-        <spring-cloud.version>2025.1.2</spring-cloud.version>
+        <spring-cloud.version>2025.1.4</spring-cloud.version>
     </properties>
 
     <!-- Dependency version management -->
