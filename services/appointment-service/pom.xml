@@ -21,7 +21,7 @@
     <!-- Project properties -->
     <properties>
         <java.version>17</java.version>
-        <spring-cloud.version>2025.1.2</spring-cloud.version>
+        <spring-cloud.version>2025.1.4</spring-cloud.version>
     </properties>
 
     <!-- Project dependencies -->
@@ -85,12 +85,6 @@
             <groupId>org.mapstruct</groupId>
             <artifactId>mapstruct</artifactId>
             <version>1.5.5.Final</version>
-        </dependency>
-
-        <!-- Application monitoring and metrics -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
 
         <!-- Inter-service communication -->
