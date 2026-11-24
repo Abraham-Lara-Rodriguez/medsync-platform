@@ -109,8 +109,6 @@ services:
       - /etc/alloy/config.alloy
     # Provides the Grafana Cloud OTLP endpoint and authorization
     # header to Alloy. Do not commit secrets from this file.
-    env_file:
-      - ./.env.docker
     volumes:
       # Mount the Alloy configuration read-only.
       - ./config.alloy/config.alloy:/etc/alloy/config.alloy:ro
