@@ -375,6 +375,8 @@ services:
       OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
       OTEL_EXPORTER_OTLP_ENDPOINT: http://grafana-alloy:4318
 
+      SERVER_USER: ${SERVER_USER}
+      SERVER_PASSWORD: ${SERVER_PASSWORD}
     depends_on:
       patient-service-postgres:
         condition: service_healthy
