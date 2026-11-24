@@ -58,7 +58,6 @@ public enum Role {
             Permission.PATIENT_UPDATE,
 
             Permission.APPOINTMENT_READ,
-            Permission.APPOINTMENT_CREATE,
             Permission.APPOINTMENT_CANCEL
     ));
 
