@@ -1,284 +1,49 @@
 # Appointment Service
 
-**Appointment Service** manages appointment scheduling between patients and doctors with resilience patterns, inter-service communication, and health tracking.
+Appointment schedules visits, updates appointments, and applies status changes. It stores patient and doctor UUIDs in its own PostgreSQL database.
 
-## Overview
+## API
 
-- **Port**: 8004
-- **Database**: PostgreSQL (Docker container: `appointment-service-postgres`)
-- **Status**: 🟡 In Development (functional core ready)
-- **Languages**: Java 17
-- **Framework**: Spring Boot 4.1.0
-- **Tests**: 3 test files
+Use the gateway at `http://localhost:8222` with `/api/v1/appointments`.
+Send a bearer access token with the authority shown below.
 
-## Responsibilities
+| Method | Route | Access | Success | Purpose |
+| --- | --- | --- | ---: | --- |
+| `GET` | `/api/v1/appointments` | `APPOINTMENT_READ` | 200 | List appointments with pagination |
+| `GET` | `/api/v1/appointments/{id}` | `APPOINTMENT_READ` | 200 | Get an appointment by UUID |
+| `POST` | `/api/v1/appointments` | `APPOINTMENT_CREATE` | 201 | Create an appointment |
+| `PUT` | `/api/v1/appointments/{id}` | `APPOINTMENT_UPDATE` | 200 | Update schedule, type, reason, and notes |
+| `PATCH` | `/api/v1/appointments/status/{id}` | `APPOINTMENT_CANCEL` | 200 | Request a status transition |
 
-- **Appointment Management**: Schedule, list, and manage patient-doctor appointments
-- **Schedule Validation**: Prevent overlapping appointments for the same doctor
-- **Inter-service Communication**: Fetch patient and doctor details via OpenFeign
-- **Resilience**: Circuit breaker and fallback patterns for fault tolerance
+## Behavior
 
-## Key Features
+The [appointment creation sequence](../../documents/architecture/create-appointment.html) shows the gateway request, patient and doctor lookups, overlap check, and database write. Download the HTML to open the interactive diagram locally.
 
-### Appointment Management
-
-- **Fields**: Patient ID, Doctor ID, appointment datetime, status, notes
-- **Status Workflow**: SCHEDULED → CONFIRMED/CANCELLED/COMPLETED
-- **Validation**: Doctor availability, date/time constraints
-
-### Inter-service Communication
-
-| Client | Target | Purpose |
-|--------|--------|---------|
-| `DoctorClient` | Doctor Service (8003) | Verify doctor exists |
-| `PatientClient` | Patient Service (8002) | Fetch patient details |
-
-### Resilience Patterns
-
-- **Circuit Breaker**: Resilience4j wraps Feign calls to prevent cascading failures
-- **Fallbacks**: `DoctorClientFallback` and `PatientClientFallback` return default/partial data
-- **Retry Logic**: Configurable retry with exponential backoff
-
-### Security
-
-- **JWT Protected**: All endpoints require valid Bearer token
-- **Feign Interceptor**: Attaches JWT to outgoing inter-service calls
-
-## Architecture
-
-### Layer Structure
-
-| Layer | Responsibility |
-|-------|----------------|
-| **Controller** | REST API endpoints (`AppointmentController`) |
-| **Service** | Business logic (`AppointmentServiceImpl`) |
-| **Repository** | Data access (`AppointmentRepository`) |
-| **Domain** | Entity, scheduler validator (`AppointmentScheduleValidator`) |
-| **Client** | OpenFeign clients + fallbacks |
-| **Exception** | Custom exception handling (`GlobalExceptionHandler`) |
-
-### Communication Flow
-
-```
-Client → Appointment Service → Feign → Doctor Service
-                                → Feign → Patient Service
-                                → PostgreSQL (local DB)
-```
-
-## Technology Stack
-
-### Backend
-
-- Java 17
-- Spring Boot 4.1.0
-- Spring Data JPA
-- Spring Cloud (Eureka, Config, OpenFeign)
-- Spring Cloud CircuitBreaker (Resilience4j)
-- Flyway
-- PostgreSQL
-
-### Resilience
-
-- **Resilience4j**: Circuit breaker for Feign clients
-- **Fallbacks**: Default responses on service failure
-
-### Infrastructure
-
-- **Docker**: Multi-stage builds
-- **Service Discovery**: Eureka Client
-- **Configuration**: Spring Cloud Config Server
-
-## API Documentation
-
-- **OpenAPI/Swagger**: `/swagger-ui.html`
-- **Standardized Errors**: RFC 7807 Problem Details
-- **Health Checks**: `/actuator/health`
-
-## Setup & Deployment
-
-### Prerequisites
-
-- Java 17+
-- Maven 3.9+
-- Docker
-
-### Running Locally
-
-```bash
-docker compose up --build
-mvn spring-boot:run
-```
-
-### Access
-
-- Swagger UI: `http://localhost:8004/swagger-ui.html`
-- Health: `http://localhost:8004/actuator/health`
-
-### Docker Compose Services
-
-| Service | Port | Description |
-|---------|------|-------------|
-| `appointment-service` | 8004 | Appointment scheduling service |
-| `appointment-service-postgres` | 5434 | Appointment database |
-
-### Dependencies (Docker)
-
-The service depends on:
-- `appointment-service-postgres` (database)
-- `config-service` (configuration)
-- `discovery-service` (service registry)
-- `auth-service` (authentication)
-- `patient-service` (patient data)
-- `doctor-service` (doctor data)
-
-## API Endpoints
-
-### Appointment Management
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/v1/appointments` | List appointments |
-| GET | `/api/v1/appointments/{id}` | Get appointment by ID |
-| POST | `/api/v1/appointments` | Create appointment |
-| PUT | `/api/v1/appointments/{id}` | Update appointment |
-
-### Request/Response Examples
-
-#### Create Appointment
-
-```http
-POST /api/v1/appointments HTTP/1.1
-Authorization: Bearer <jwt-token>
-Content-Type: application/json
-
-{
-  "patientId": "uuid-patient",
-  "doctorId": "uuid-doctor",
-  "appointmentDateTime": "2026-10-15T10:30:00",
-  "durationMinutes": 30,
-  "reason": "Routine checkup"
-}
-```
-
-#### Response
-
-```json
-{
-  "id": "uuid-appointment",
-  "patientId": "uuid-patient",
-  "doctorId": "uuid-doctor",
-  "appointmentDateTime": "2026-10-15T10:30:00",
-  "durationMinutes": 30,
-  "status": "SCHEDULED",
-  "reason": "Routine checkup",
-  "createdAt": "2026-10-06T10:00:00.000Z"
-}
-```
+- On creation, the service calls Patient and Doctor through OpenFeign to verify that both records exist and are active. It forwards the caller’s bearer token, so the caller also needs `PATIENT_READ` and `DOCTOR_READ` for these lookups.
+- Creation and schedule updates check for overlapping appointments for the same doctor and date. The overlap query includes cancelled appointments and excludes the appointment being updated. The check runs before the write in application code.
+- New appointments start in `SCHEDULED`. The status endpoint accepts requests for `CONFIRMED`, `COMPLETED`, `CANCELLED`, and `NO_SHOW`, subject to domain transition rules. All four actions currently use the endpoint authority `APPOINTMENT_CANCEL`.
+- Appointment lists default to 20 results per page sorted by ID.
 
 ## Configuration
 
-### Environment Variables
+Use `APPOINTMENT_SERVER_DB_*`, `APPOINTMENT_SERVER_PORT`, and `APPOINTMENT_SERVER_PROFILES` with the shared JWT signing key. The creation flow needs both Patient and Doctor reachable through service discovery.
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `APPOINTMENT_SERVER_PORT` | `8004` | Service port |
-| `APPOINTMENT_SERVER_PROFILES` | `dev` | Spring profiles |
-| `APPOINTMENT_SERVER_DB_URL` | `jdbc:postgresql://localhost:5434/appointment-service` | Database URL |
-| `AUTH_SERVER_SECRET_KEY` | — | JWT validation key |
+See the [platform setup](../../README.md#run-with-docker-compose) and [Docker environment template](../../deployment/env/.env.docker.example).
 
-## Testing
+## Tests and coverage
 
-### Test Coverage
+The November 25, 2026 run at `f9c0300` passed **140 tests** with zero failures, errors, or skips. JaCoCo measured **90.6% line coverage** and **77.4% branch coverage**. The service met its configured coverage checks.
 
-- **Line Coverage**: 85% minimum (`JaCoCo` enforced)
-- **Unit Tests**: 1 file (`AppointmentServiceImplTest`)
-- **Integration Tests**: 1 file (`AppointmentControllerIntegrationTest`)
-- **Error Handling Tests**: 1 file (`GlobalExceptionHandlerTest`)
+The saved HTML snapshot is local to this workspace.
 
-### Test Commands
+- JaCoCo — `documents/appointment-service/jacoco/index.html`
+- Surefire — `documents/appointment-service/surefire/surefire.html`
 
-```bash
-mvn test
-mvn jacoco:report
+From the repository root, run the verification with Docker available for Testcontainers. The second command renders Surefire HTML from the test results.
+
+```sh
+mvn -pl services/appointment-service -am clean verify
+mvn -pl services/appointment-service surefire-report:report-only
 ```
 
-## Monitoring & Observability
-
-### Actuator Endpoints
-
-- `/actuator/health` - Service health
-- `/actuator/info` - Service information
-- `/actuator/metrics` - Application metrics
-- `/actuator/circuitbreakers` - Circuit breaker status
-
-### Circuit Breaker Monitoring
-
-Resilience4j circuit breaker state is visible via:
-- `/actuator/circuitbreakers`
-- Health endpoint includes circuit breaker status
-
-## Error Handling
-
-### Standardized Errors (RFC 7807)
-
-```json
-{
-  "type": "https://api.medsync.com/errors/conflict",
-  "title": "Conflict",
-  "status": 409,
-  "detail": "Doctor already has an appointment at 10:30",
-  "instance": "/api/v1/appointments",
-  "timestamp": "2026-10-06T10:00:00.000Z",
-  "code": "CONFLICT"
-}
-```
-
-### Error Codes
-
-| Code | Status | Description |
-|------|--------|-------------|
-| `VALIDATION_ERROR` | `400` | Input validation failures |
-| `RESOURCE_NOT_FOUND` | `404` | Appointment/doctor/patient not found |
-| `CONFLICT` | `409` | Schedule conflict |
-| `SERVICE_UNAVAILABLE` | `503` | Downstream service unavailable (fallback triggered) |
-
-## Inter-service Communication
-
-### Feign Clients
-
-```java
-@FeignClient(name = "doctor-service")
-public interface DoctorClient {
-    @GetMapping("/api/v1/doctors/{id}")
-    DoctorResponse getDoctorById(@PathVariable("id") UUID id);
-}
-```
-
-### Fallback Example
-
-```java
-@Component
-public class DoctorClientFallback implements DoctorClient {
-    @Override
-    public DoctorResponse getDoctorById(UUID id) {
-        return new DoctorResponse("unknown", "Unavailable");
-    }
-}
-```
-
-## Future Enhancements
-
-- **Notifications**: Reminders via email/SMS
-- **Recurring appointments**: Weekly/monthly schedules
-- **Cancellation policy**: Time-based cancellation rules
-- **Audit log**: Appointment history tracking
-- **Availability management**: Doctor calendar integration
-
-## License
-
-Part of MedSync Platform — educational and demonstration purposes.
-
----
-
-**Version**: 0.0.1-SNAPSHOT  
-**Last Updated**: 2026-10-06
+Fresh reports are generated under this module’s `target/site/jacoco/` and `target/reports/` directories.
