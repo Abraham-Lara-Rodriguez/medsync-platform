@@ -100,6 +100,9 @@ services:
     image: grafana/alloy:latest
     container_name: grafana-alloy
     restart: unless-stopped
+    environment:
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT}
+      GRAFANA_CLOUD_AUTHORIZATION: ${GRAFANA_CLOUD_AUTHORIZATION}
     # Start Alloy with its HTTP UI/API on port 12345 and load
     # the mounted River configuration file.
     command:
@@ -240,6 +243,9 @@ services:
       OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
       OTEL_EXPORTER_OTLP_ENDPOINT: http://grafana-alloy:4318
     # Publish the API Gateway to the host for local client access.
+
+      SERVER_USER: ${SERVER_USER}
+      SERVER_PASSWORD: ${SERVER_PASSWORD}
     ports:
       - "8222:8222"
     depends_on:
