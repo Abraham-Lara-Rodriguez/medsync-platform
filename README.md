@@ -1,220 +1,56 @@
 # MedSync Platform
 
 [![CI](https://github.com/Abraham-Lara-Rodriguez/medsync-platform/actions/workflows/ci.yml/badge.svg)](https://github.com/Abraham-Lara-Rodriguez/medsync-platform/actions/workflows/ci.yml)
-![GitHub repo size](https://img.shields.io/github/repo-size/Abraham-Lara-Rodriguez/medsync-platform)
-![GitHub stars](https://img.shields.io/github/stars/Abraham-Lara-Rodriguez/medsync-platform?style=social)
-![GitHub last commit](https://img.shields.io/github/last-commit/Abraham-Lara-Rodriguez/medsync-platform)
-![GitHub license](https://img.shields.io/github/license/Abraham-Lara-Rodriguez/medsync-platform)
 
-# MedSync Platform
-
-A production-oriented healthcare backend platform built with **Spring Boot microservices**, **Spring Cloud**, **JWT
-authentication**, **PostgreSQL**, and **Docker**.
-
-MedSync Platform is designed as a modular and scalable microservices architecture that demonstrates enterprise backend
-development practices, including centralized configuration, service discovery, API gateway routing, shared security,
-standardized error handling, database migrations, and containerized deployment.
+MedSync is a healthcare scheduling backend built with Java 17, Spring Boot, Spring Cloud, and PostgreSQL. It manages user accounts, patient records, doctor records, and appointments through a single API gateway.
 
 ## Architecture
 
-The platform is organized as a Maven multi-module monorepo where infrastructure services, domain services, and shared
-libraries are separated into independent modules.
+[![MedSync deployment diagram showing the gateway, business services, and PostgreSQL databases](documents/architecture/deployment.svg)](documents/architecture/deployment.svg)
 
-```text
-                        +-----------------------+
-                        |      API Gateway      |
-                        |        :8222          |
-                        +----------+------------+
-                                   |
-                 +-----------------+-----------------+
-                 |                                   |
-                 |                                   |
-        +--------v--------+                 +--------v--------+
-        |  Auth Service    |                 | Patient Service |
-        |      :8001       |                 |      :8002      |
-        +--------+--------+                 +--------+--------+
-                 |                                   |
-         PostgreSQL :5433                    PostgreSQL :5432
+Open the [interactive deployment diagram](documents/architecture/deployment.html) or the [appointment creation sequence](documents/architecture/create-appointment.html) in a browser. On GitHub, download the HTML file and open it locally to use the interactive viewer. The editable Archify definitions are [deployment.json](documents/architecture/deployment.json) and [create-appointment.json](documents/architecture/create-appointment.json).
 
-                 +-----------------------------------+
-                 |        Discovery Service          |
-                 |             :8761                |
-                 +----------------+------------------+
-                                  |
-                 +----------------v------------------+
-                 |          Config Service           |
-                 |              :8888               |
-                 +-----------------------------------+
+| Component | Responsibility |
+| --- | --- |
+| [API Gateway](gateway/api-gateway/README.md) | Publishes the HTTP entry point and routes requests to services discovered through Eureka. |
+| [Config Server](infrastructure/config-service/README.md) | Serves shared and profile-specific Spring configuration. |
+| [Discovery Service](infrastructure/discovery-service/README.md) | Runs the Eureka service registry. |
+| [Auth Service](services/auth-service/README.md) | Manages user accounts, roles, JWT access tokens, and refresh sessions. |
+| [Patient Service](services/patient-service/README.md) | Registers, updates, and deactivates patient records. |
+| [Doctor Service](services/doctor-service/README.md) | Maintains doctor profiles, specialties, and active status. |
+| [Appointment Service](services/appointment-service/README.md) | Schedules and updates appointments, validates patient and doctor records, and applies status transitions. |
+| [Shared libraries](shared/) | Provide JWT validation and common API error handling. |
 
-             Shared libraries:
-             - common-security
-             - common-core
+The gateway routes the five API families under `/api/v1` to the four business services. Each business service owns its PostgreSQL database and Flyway migrations. Docker Compose runs PostgreSQL 18 and Grafana Alloy. Instrumented services send OTLP to Alloy, which forwards traces to the configured destination.
+
+## Run with Docker Compose
+
+Run these PowerShell commands from the repository root with Docker running.
+
+```powershell
+if (-not (Test-Path deployment/env/.env.docker)) {
+    Copy-Item deployment/env/.env.docker.example deployment/env/.env.docker
+}
 ```
 
-## Modules
+If you already have a local environment file, keep it and use the [Docker template](deployment/env/.env.docker.example) as a reference. Set matching Config Server and Eureka credentials, database passwords, the JWT signing key, and the patient and doctor encryption and hash keys. Enable administrator bootstrap and set its credentials if you need an initial account in a fresh database.
 
-| Module              | Description                                                                               |
-|---------------------|-------------------------------------------------------------------------------------------|
-| `auth-service`      | Authentication, JWT token issuance, refresh tokens, user management, and authorization    |
-| `patient-service`   | Patient management, encrypted sensitive data storage, validation, and business rules      |
-| `api-gateway`       | Central entry point, routing, load balancing, and service exposure                        |
-| `discovery-service` | Eureka service registry for dynamic service discovery                                     |
-| `config-service`    | Spring Cloud Config Server with centralized configuration                                 |
-| `common-security`   | Shared JWT resource server validation and security configuration                          |
-| `common-core`       | Shared Problem Details model, error codes, base exceptions, and global exception handling |
-| `deployment`        | Docker Compose environment and deployment configuration                                   |
-
-## Technology Stack
-
-### Backend
-
-* Java 17
-* Spring Boot 4.1
-* Spring Security
-* Spring Data JPA
-* Spring Cloud Gateway
-* Spring Cloud Config
-* Spring Cloud Netflix Eureka
-* Flyway
-* OpenAPI / Swagger
-
-### Infrastructure
-
-* PostgreSQL
-* Docker
-* Docker Compose
-* Maven
-
-### Testing
-
-* JUnit 5
-* Mockito
-
-## Current Features
-
-### Authentication & Authorization
-
-* JWT access tokens
-* Refresh token support
-* Role and authority-based authorization
-* Method-level security (`@PreAuthorize`)
-* Secure password handling
-* User management endpoints
-* OpenAPI documentation
-
-### Patient Management
-
-* CRUD operations
-* Pagination support
-* Request validation
-* Patient status management
-* Sensitive document encryption
-* Uniqueness validation
-* Standardized API error responses
-
-### Platform Infrastructure
-
-* Centralized configuration
-* Service discovery
-* API gateway routing
-* Shared security library
-* Shared exception handling
-* Database migrations
-* Containerized deployment
-
-## Getting Started
-
-### Prerequisites
-
-* Java 17+
-* Maven 3.9+
-* Docker
-* Docker Compose
-
-### Run with Docker
-
-From the `deployment` directory:
-
-```bash
-docker compose up --build
+```powershell
+docker compose --env-file deployment/env/.env.docker -f deployment/docker-compose.yml config --quiet
+docker compose --env-file deployment/env/.env.docker -f deployment/docker-compose.yml up -d --build
+curl.exe -i http://localhost:8222/actuator/health
 ```
 
-The platform starts the following services:
+Use `http://localhost:8222/api/v1` for business requests. The [local environment template](deployment/env/.env.example) provides values for running the JVM services outside Docker. The four business services enforce endpoint authorities using bearer access tokens. The current patient and appointment APIs authorize at the endpoint level. Deployments that expose patient accounts need a record ownership policy.
 
-| Service              | Port |
-|----------------------|------|
-| Config Service       | 8888 |
-| Discovery Service    | 8761 |
-| API Gateway          | 8222 |
-| Auth Service         | 8001 |
-| Patient Service      | 8002 |
-| PostgreSQL (Patient) | 5432 |
-| PostgreSQL (Auth)    | 5433 |
+## Verify the system
 
-## Project Structure
+Run the Maven reactor from the repository root with Java 17, Maven, and Docker available. Docker is used by integration suites that provision temporary PostgreSQL containers.
 
-```text
-medsync-platform/
-├── api-gateway/
-├── auth-service/
-├── patient-service/
-├── config-service/
-├── discovery-service/
-├── common-security/
-├── common-core/
-├── deployment/
-├── pom.xml
-├── .gitignore
-└── .dockerignore
+```sh
+mvn clean verify
 ```
 
-## Shared Libraries
+On November 25, 2026, the four business-service suites at `f9c0300` passed **495 tests**, and each met its configured JaCoCo checks. The service README files list the per-service results and report locations. Generated reports under `documents/` are local build evidence.
 
-### common-security
-
-Provides reusable JWT validation and resource server configuration that can be consumed by any microservice requiring
-authentication.
-
-### common-core
-
-Provides a consistent error model across all services using RFC 7807 Problem Details, shared error codes, and
-centralized exception handling.
-
-## Security Model
-
-Authentication is centralized in the **Auth Service**, while resource services validate JWT tokens through the *
-*common-security** module.
-
-The authorization model is based on **roles and granular authorities**, allowing endpoint-level permission control
-through Spring Security.
-
-## Design Principles
-
-This project follows several enterprise-oriented architectural principles:
-
-* Microservices architecture
-* Separation of concerns
-* Reusable shared modules
-* Centralized configuration
-* Standardized error responses
-* Stateless authentication
-* Container-first deployment
-* Infrastructure decoupling
-
-## Roadmap
-
-Planned future enhancements include:
-
-* Appointment Service
-* Notification Service
-* Audit Service
-* Distributed tracing
-* Prometheus & Grafana monitoring
-* CI/CD pipelines
-* Kubernetes deployment
-* Event-driven communication
-* Resilience patterns (Circuit Breaker / Retry)
-
-## License
-
-This project is intended for educational, portfolio, and architectural demonstration purposes.
+With the stack running, use the [flow runner](deployment/script/README.md) to exercise the deployed APIs through the gateway and export a JSON execution record. The full scenario creates synthetic records and leaves them in the database for inspection.
