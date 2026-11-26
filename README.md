@@ -1,6 +1,10 @@
 # MedSync Platform
 
 [![CI](https://github.com/Abraham-Lara-Rodriguez/medsync-platform/actions/workflows/ci.yml/badge.svg)](https://github.com/Abraham-Lara-Rodriguez/medsync-platform/actions/workflows/ci.yml)
+![GitHub repo size](https://img.shields.io/github/repo-size/Abraham-Lara-Rodriguez/medsync-platform)
+![GitHub stars](https://img.shields.io/github/stars/Abraham-Lara-Rodriguez/medsync-platform?style=social)
+![GitHub last commit](https://img.shields.io/github/last-commit/Abraham-Lara-Rodriguez/medsync-platform)
+![GitHub license](https://img.shields.io/github/license/Abraham-Lara-Rodriguez/medsync-platform)
 
 MedSync is a healthcare scheduling backend built with Java 17, Spring Boot, Spring Cloud, and PostgreSQL. It manages user accounts, patient records, doctor records, and appointments through a single API gateway.
 
@@ -51,6 +55,6 @@ Run the Maven reactor from the repository root with Java 17, Maven, and Docker a
 mvn clean verify
 ```
 
-On November 25, 2026, the four business-service suites at `f9c0300` passed **495 tests**, and each met its configured JaCoCo checks. The service README files list the per-service results and report locations. Generated reports under `documents/` are local build evidence.
+On November 25, 2026, the four business-service suites at `f9c0300` passed **495 tests**, and each met its configured JaCoCo checks. The service README files list the results and explain how to generate the HTML reports under each module's `target/` directory.
 
 With the stack running, use the [flow runner](deployment/script/README.md) to exercise the deployed APIs through the gateway and export a JSON execution record. The full scenario creates synthetic records and leaves them in the database for inspection.

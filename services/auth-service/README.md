@@ -33,16 +33,14 @@ See the [platform setup](../../README.md#run-with-docker-compose) and [Docker en
 
 The November 25, 2026 run at `f9c0300` passed **131 tests** with zero failures, errors, or skips. JaCoCo measured **94.9% line coverage** and **89.3% branch coverage**. The service met its configured coverage checks.
 
-The saved HTML snapshot is local to this workspace.
-
-- JaCoCo — `documents/auth-service/jacoco/index.html`
-- Surefire — `documents/auth-service/surefire/surefire.html`
-
-From the repository root, run the verification with Docker available for Testcontainers. The second command renders Surefire HTML from the test results.
+To generate the reports locally, run these two commands from the repository root with Docker available for Testcontainers. The first runs the tests and generates JaCoCo coverage. The second renders the Surefire HTML from those test results.
 
 ```sh
 mvn -pl services/auth-service -am clean verify
 mvn -pl services/auth-service surefire-report:report-only
 ```
 
-Fresh reports are generated under this module’s `target/site/jacoco/` and `target/reports/` directories.
+After the commands complete, open the generated HTML files:
+
+- JaCoCo — `services/auth-service/target/site/jacoco/index.html`
+- Surefire — `services/auth-service/target/reports/surefire.html`
