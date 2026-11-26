@@ -1,0 +1,246 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Create an Appointment",
+    "output": "documents/architecture/create-appointment.html",
+    "quality_profile": "showcase",
+    "locale": "en",
+    "repository": {
+      "url": "https://github.com/Abraham-Lara-Rodriguez/medsync-platform.git",
+      "revision": "f9c03003fc8cf41645e561ead14e4c479b88e433"
+    }
+  },
+  "participants": [
+    {
+      "id": "reception",
+      "type": "external",
+      "label": "Receptionist",
+      "sublabel": "API client",
+      "sources": [
+        {
+          "path": "services/auth-service/src/main/java/com/medsync/authservice/domain/enums/auth/Role.java",
+          "line": 32,
+          "end_line": 43
+        },
+        {
+          "path": "services/appointment-service/src/main/java/com/medsync/appointmentservice/controller/AppointmentController.java",
+          "line": 39,
+          "end_line": 43
+        }
+      ]
+    },
+    {
+      "id": "gateway",
+      "type": "backend",
+      "label": "API Gateway",
+      "sublabel": "WebFlux",
+      "sources": [
+        {
+          "path": "infrastructure/config-service/src/main/resources/config/api-gateway/api-gateway.yaml",
+          "line": 16,
+          "end_line": 20
+        }
+      ]
+    },
+    {
+      "id": "appointment",
+      "type": "backend",
+      "label": "Appointment",
+      "sublabel": "Booking service",
+      "sources": [
+        {
+          "path": "services/appointment-service/src/main/java/com/medsync/appointmentservice/controller/AppointmentController.java",
+          "line": 39,
+          "end_line": 43
+        },
+        {
+          "path": "services/appointment-service/src/main/java/com/medsync/appointmentservice/service/AppointmentServiceImpl.java",
+          "line": 55,
+          "end_line": 91
+        },
+        {
+          "path": "services/appointment-service/src/main/java/com/medsync/appointmentservice/client/component/FeignClientInterceptor.java",
+          "line": 12,
+          "end_line": 21
+        }
+      ]
+    },
+    {
+      "id": "patient",
+      "type": "backend",
+      "label": "Patient",
+      "sublabel": "Record lookup",
+      "sources": [
+        {
+          "path": "services/appointment-service/src/main/java/com/medsync/appointmentservice/client/patient/config/PatientClient.java",
+          "line": 12,
+          "end_line": 17
+        },
+        {
+          "path": "services/appointment-service/src/main/java/com/medsync/appointmentservice/service/AppointmentServiceImpl.java",
+          "line": 164,
+          "end_line": 180
+        }
+      ]
+    },
+    {
+      "id": "doctor",
+      "type": "backend",
+      "label": "Doctor",
+      "sublabel": "Record lookup",
+      "sources": [
+        {
+          "path": "services/appointment-service/src/main/java/com/medsync/appointmentservice/client/doctor/config/DoctorClient.java",
+          "line": 11,
+          "end_line": 15
+        },
+        {
+          "path": "services/appointment-service/src/main/java/com/medsync/appointmentservice/service/AppointmentServiceImpl.java",
+          "line": 182,
+          "end_line": 199
+        }
+      ]
+    },
+    {
+      "id": "database",
+      "type": "database",
+      "label": "PostgreSQL",
+      "sublabel": "Appointment store",
+      "sources": [
+        {
+          "path": "deployment/docker-compose.yml",
+          "line": 52,
+          "end_line": 60
+        },
+        {
+          "path": "services/appointment-service/src/main/java/com/medsync/appointmentservice/service/AppointmentServiceImpl.java",
+          "line": 86,
+          "end_line": 91
+        },
+        {
+          "path": "services/appointment-service/src/main/java/com/medsync/appointmentservice/service/AppointmentServiceImpl.java",
+          "line": 200,
+          "end_line": 218
+        }
+      ]
+    }
+  ],
+  "messages": [
+    {
+      "id": "step-1",
+      "from": "reception",
+      "to": "gateway",
+      "label": "POST /api/v1/appointments",
+      "variant": "emphasis",
+      "y": 166
+    },
+    {
+      "id": "step-2",
+      "from": "gateway",
+      "to": "appointment",
+      "label": "Forward POST",
+      "variant": "emphasis",
+      "y": 201
+    },
+    {
+      "id": "step-3",
+      "from": "appointment",
+      "to": "patient",
+      "label": "GET /api/v1/patients/{id}",
+      "variant": "security",
+      "y": 236
+    },
+    {
+      "id": "step-4",
+      "from": "patient",
+      "to": "appointment",
+      "label": "Active patient",
+      "variant": "return",
+      "y": 271
+    },
+    {
+      "id": "step-5",
+      "from": "appointment",
+      "to": "doctor",
+      "label": "GET /api/v1/doctors/{id}",
+      "variant": "security",
+      "y": 306
+    },
+    {
+      "id": "step-6",
+      "from": "doctor",
+      "to": "appointment",
+      "label": "Active doctor",
+      "variant": "return",
+      "y": 341
+    },
+    {
+      "id": "step-7",
+      "from": "appointment",
+      "to": "database",
+      "label": "Check doctor/date overlap",
+      "variant": "default",
+      "y": 376
+    },
+    {
+      "id": "step-8",
+      "from": "database",
+      "to": "appointment",
+      "label": "No overlap",
+      "variant": "return",
+      "y": 411
+    },
+    {
+      "id": "step-9",
+      "from": "appointment",
+      "to": "database",
+      "label": "Save appointment",
+      "variant": "emphasis",
+      "y": 446
+    },
+    {
+      "id": "step-10",
+      "from": "database",
+      "to": "appointment",
+      "label": "Saved appointment",
+      "variant": "return",
+      "y": 481
+    },
+    {
+      "id": "step-11",
+      "from": "appointment",
+      "to": "gateway",
+      "label": "201 Created",
+      "variant": "return",
+      "y": 516
+    },
+    {
+      "id": "step-12",
+      "from": "gateway",
+      "to": "reception",
+      "label": "201 Created",
+      "variant": "return",
+      "y": 551
+    }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "Authorization",
+      "items": [
+        "Appointment requires APPOINTMENT_CREATE. The Feign interceptor forwards the caller’s Authorization header.",
+        "The patient and doctor lookups require PATIENT_READ and DOCTOR_READ. RECEPTIONIST has all three authorities."
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Booking checks",
+      "items": [
+        "Appointment requires an active patient and doctor. It validates the schedule before saving.",
+        "The overlap query checks the doctor and date using the requested time interval.",
+        "The successful response includes the appointment and a Location header."
+      ]
+    }
+  ]
+}

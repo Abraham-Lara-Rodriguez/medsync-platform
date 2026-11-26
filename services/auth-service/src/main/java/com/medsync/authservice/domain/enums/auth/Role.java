@@ -1,4 +1,4 @@
-package com.medsync.authservice.domain.enums;
+package com.medsync.authservice.domain.enums.auth;
 
 import lombok.Getter;
 
@@ -58,7 +58,6 @@ public enum Role {
             Permission.PATIENT_UPDATE,
 
             Permission.APPOINTMENT_READ,
-            Permission.APPOINTMENT_CREATE,
             Permission.APPOINTMENT_CANCEL
     ));
 

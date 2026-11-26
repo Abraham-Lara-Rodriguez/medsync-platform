@@ -1,4 +1,4 @@
-package com.medsync.authservice.domain.enums;
+package com.medsync.authservice.domain.enums.auth;
 
 public enum Permission {
     // User management

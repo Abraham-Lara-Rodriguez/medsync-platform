@@ -1,0 +1,13 @@
+spring:
+  application:
+    name: discovery-service
+  security:
+    user:
+      name: test
+      password: test
+  cloud:
+    config:
+      username: test
+      password: test
+  config:
+    import: "optional:configserver:http://${CONFIG_SERVER_HOSTNAME}:${CONFIG_SERVER_PORT}"

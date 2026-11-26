@@ -1,255 +1,45 @@
 # Doctor Service
 
-**Doctor Service** manages doctor records with secure data handling, validation, and integration with the MedSync Platform ecosystem.
+Doctor manages doctor profiles, specialties, license details, and active status in its own PostgreSQL database.
 
-## Overview
+## API
 
-- **Port**: 8003
-- **Database**: PostgreSQL (Docker container: `doctor-service-postgres`)
-- **Status**: ✅ Production Ready (recently updated)
-- **Languages**: Java 17
-- **Framework**: Spring Boot 4.1.0
-- **Tests**: 3 test files (recently expanded with integration tests)
+Use the gateway at `http://localhost:8222` with `/api/v1/doctors`.
+Send a bearer access token with the authority shown below.
 
-## Responsibilities
+| Method | Route | Access | Success | Purpose |
+| --- | --- | --- | ---: | --- |
+| `GET` | `/api/v1/doctors` | `DOCTOR_READ` | 200 | List doctors with pagination |
+| `GET` | `/api/v1/doctors/{id}` | `DOCTOR_READ` | 200 | Get a doctor by UUID |
+| `POST` | `/api/v1/doctors` | `DOCTOR_CREATE` | 201 | Register a doctor |
+| `PUT` | `/api/v1/doctors/{id}` | `DOCTOR_UPDATE` | 200 | Update name, contact details, and status |
 
-- **Doctor Management**: Full CRUD operations for doctor records
-- **Data Encryption**: AES encryption for sensitive PII (contact info)
-- **Data Integrity**: SHA-256 hashing for identifiers
-- **Validation**: Comprehensive input validation and uniqueness checks
-- **Inter-service Communication**: OpenFeign clients for appointment service integration
+## Behavior
 
-## Key Features
-
-### Doctor Records
-
-- **Fields**: First name, last name, specialization, credentials, contact info
-- **Status Management**: Active/Inactive doctor states
-- **Uniqueness**: Medical license number uniqueness enforced
-
-### Data Security
-
-- **AES Encryption**: Contact information encrypted at rest
-- **Deterministic Hashing**: Identifiers hashed for privacy
-- **Field-Level Protection**: Sensitive data never exposed in API responses
-
-### Inter-service Communication
-
-- **OpenFeign**: Declarative client for appointment service
-- **Resilience4j**: Circuit breaker for fault tolerance
-- **Fallbacks**: Graceful degradation when services are unavailable
-
-### Validation
-
-- **Input Validation**: Jakarta Bean Validation on all DTOs
-- **Business Rules**: Specialization format, credential validation
-- **Uniqueness**: Real-time duplicate detection
-
-## Architecture
-
-### Layer Structure
-
-| Layer | Responsibility |
-|-------|----------------|
-| **Controller** | REST API endpoints (`DoctorController`) |
-| **Service** | Business logic (`DoctorServiceImpl`, `DoctorUniquenessValidator`, `DoctorHashService`) |
-| **Repository** | Data access (`DoctorRepository`) |
-| **Domain** | Entities, enums, constants, converters |
-| **Mapper** | MapStruct mapping between entities and DTOs |
-
-### Security Components
-
-- **EncryptedStringConverter**: JPA AttributeConverter for AES encryption/decryption
-- **DeterministicHasher**: SHA-256 hashing for identifiers
-- **DoctorHashService**: Hash computation and validation
-
-## Technology Stack
-
-### Backend
-
-- Java 17
-- Spring Boot 4.1.0
-- Spring Data JPA
-- Spring Cloud (Eureka, Config)
-- Flyway (Database Migrations)
-- PostgreSQL
-- MapStruct 1.5.5.Final
-- Jasypt 1.9.3
-
-### Security
-
-- **Encryption**: AES-256 via JPA converters
-- **Hashing**: SHA-256
-- **Validation**: Jakarta Bean Validation
-
-### Infrastructure
-
-- **Docker**: Multi-stage builds, healthchecks via Actuator
-- **Service Discovery**: Eureka Client
-- **Configuration**: Spring Cloud Config Server
-- **Circuit Breaker**: Resilience4j for fault tolerance
-
-## API Documentation
-
-- **OpenAPI/Swagger**: `/swagger-ui.html`
-- **Standardized Errors**: RFC 7807 Problem Details
-- **Health Checks**: `/actuator/health`
-
-## Setup & Deployment
-
-### Prerequisites
-
-- Java 17+
-- Maven 3.9+
-- Docker
-
-### Running Locally
-
-```bash
-docker compose up --build
-mvn spring-boot:run
-```
-
-### Access
-
-- Swagger UI: `http://localhost:8003/swagger-ui.html`
-- Health: `http://localhost:8003/actuator/health`
-
-### Docker Compose Services
-
-| Service | Port | Description |
-|---------|------|-------------|
-| `doctor-service` | 8003 | Doctor management service |
-| `doctor-service-postgres` | 5435 | Doctor database |
-
-## API Endpoints
-
-### Doctor Management
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/v1/doctors` | List doctors (paginated) |
-| GET | `/api/v1/doctors/{id}` | Get doctor by ID |
-| POST | `/api/v1/doctors` | Create doctor |
-| PUT | `/api/v1/doctors/{id}` | Update doctor |
-
-### Request/Response Examples
-
-#### Create Doctor
-
-```http
-POST /api/v1/doctors HTTP/1.1
-Content-Type: application/json
-
-{
-  "firstName": "Dr. Carlos",
-  "lastName": "Rodriguez",
-  "specialization": "Cardiology",
-  "credentials": "MD, PhD",
-  "licenseNumber": "LO-12345",
-  "phone": "+573007654321",
-  "email": "carlos.rodriguez@medsync.com",
-  "status": "ACTIVE"
-}
-```
-
-#### Response
-
-```json
-{
-  "id": "uuid",
-  "firstName": "Dr. Carlos",
-  "lastName": "Rodriguez",
-  "specialization": "Cardiology",
-  "credentials": "MD, PhD",
-  "licenseNumber": "LO-12345",
-  "phone": "+573007654321",
-  "email": "carlos.rodriguez@medsync.com",
-  "status": "ACTIVE",
-  "createdAt": "2026-10-06T10:00:00.000Z",
-  "updatedAt": "2026-10-06T10:00:00.000Z"
-}
-```
+- Doctor lists default to 20 results per page sorted by first name.
+- Medical license, email, and phone are encrypted at rest. Separate deterministic hashes support uniqueness checks.
+- The create request accepts specialty and medical license. The update request accepts name, email, phone, and status. Appointment checks that the doctor is active before creating a booking.
 
 ## Configuration
 
-### Environment Variables
+Use `DOCTOR_SERVER_DB_*`, `DOCTOR_SERVER_PORT`, and `DOCTOR_SERVER_PROFILES` with the shared JWT signing key. Compose maps `DOCTOR_ENCRYPTION_KEY` and `DOCTOR_HASH_KEY` to `ENCRYPTION_KEY` and `MEDSYNC_HASH_KEY`. Keep those keys with the data they protect.
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `DOCTOR_SERVER_PORT` | `8003` | Service port |
-| `DOCTOR_SERVER_PROFILES` | `dev` | Spring profiles (dev/prod) |
-| `DOCTOR_ENCRYPTION_KEY` | `<GENERATE_KEY>` | AES encryption key (32+ chars) |
-| `MEDSYNC_HASH_KEY` | `<GENERATE_KEY>` | Hash key for identifiers |
-| `DOCTOR_SERVER_DB_URL` | `jdbc:postgresql://localhost:5435/doctor-service` | Database URL |
+See the [platform setup](../../README.md#run-with-docker-compose) and [Docker environment template](../../deployment/env/.env.docker.example).
 
-### Database Migration
+## Tests and coverage
 
-- **Flyway**: Automatic on startup
-- **Location**: `src/main/resources/db/migration/V1__init_doctors.sql`
-- **Tables**: `doctors` with encrypted columns
+The November 25, 2026 run at `f9c0300` passed **104 tests** with zero failures, errors, or skips. JaCoCo measured **91.1% line coverage** and **83.3% branch coverage**. The service met its configured coverage checks.
 
-## Testing
+The saved HTML snapshot is local to this workspace.
 
-### Test Coverage
+- JaCoCo — `documents/doctor-service/jacoco/index.html`
+- Surefire — `documents/doctor-service/surefire/surefire.html`
 
-- **Line Coverage**: 85% minimum (`JaCoCo` enforced, recently expanded)
-- **Unit Tests**: Cover domain and integration tests
-- **Integration Tests**: Testcontainers with PostgreSQL
-- **Recent Updates**: Tests expanded per commit `0bd1789`
+From the repository root, run the verification with Docker available for Testcontainers. The second command renders Surefire HTML from the test results.
 
-### Test Commands
-
-```bash
-mvn test
-mvn jacoco:report
+```sh
+mvn -pl services/doctor-service -am clean verify
+mvn -pl services/doctor-service surefire-report:report-only
 ```
 
-## Monitoring & Observability
-
-### Actuator Endpoints
-
-- `/actuator/health` - Service health
-- `/actuator/info` - Service information
-- `/actuator/metrics` - Application metrics
-
-## Error Handling
-
-### Standardized Errors (RFC 7807)
-
-```json
-{
-  "type": "https://api.medsync.com/errors/validation-error",
-  "title": "Validation Error",
-  "status": 400,
-  "detail": "Doctor license already exists",
-  "instance": "/api/v1/doctors",
-  "timestamp": "2026-10-06T10:00:00.000Z",
-  "code": "DUPLICATE_RESOURCE"
-}
-```
-
-### Error Codes
-
-| Code | Status | Description |
-|------|--------|-------------|
-| `VALIDATION_ERROR` | `400` | Input validation failures |
-| `DUPLICATE_RESOURCE` | `409` | License number already exists |
-| `RESOURCE_NOT_FOUND` | `404` | Doctor not found |
-| `INTERNAL_ERROR` | `500` | Unexpected errors |
-
-## Future Enhancements
-
-- **Availability**: Doctor scheduling and availability management
-- **Specializations**: Advanced search by specialization and location
-- **Audit Trail**: Doctor record change history
-- **Integration**: Enhanced appointment service integration
-
-## License
-
-Part of MedSync Platform — educational and demonstration purposes.
-
----
-
-**Version**: 0.0.1-SNAPSHOT  
-**Last Updated**: 2026-10-06
+Fresh reports are generated under this module’s `target/site/jacoco/` and `target/reports/` directories.

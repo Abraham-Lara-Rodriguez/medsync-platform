@@ -1,7 +1,7 @@
 package com.medsync.authservice.dto.user.request;
 
-import com.medsync.authservice.domain.enums.Role;
-import com.medsync.authservice.domain.enums.UserStatus;
+import com.medsync.authservice.domain.enums.auth.Role;
+import com.medsync.authservice.domain.enums.user.UserStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 @Schema(description = "Filtering options for querying users.")

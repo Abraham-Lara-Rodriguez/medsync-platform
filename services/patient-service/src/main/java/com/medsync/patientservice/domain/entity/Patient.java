@@ -37,7 +37,6 @@ public class Patient {
     @Column(nullable = false, length = MAX_NAME_LENGTH)
     private String lastName;
 
-
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Gender gender;

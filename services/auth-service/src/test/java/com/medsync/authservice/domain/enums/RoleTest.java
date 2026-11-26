@@ -1,5 +1,7 @@
 package com.medsync.authservice.domain.enums;
 
+import com.medsync.authservice.domain.enums.auth.Permission;
+import com.medsync.authservice.domain.enums.auth.Role;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 

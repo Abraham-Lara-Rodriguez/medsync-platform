@@ -46,5 +46,15 @@ Desktop.ini
 **/.env.*.local
 !**/.env.template
 .env*
+!/deployment/env/.env.example
+!/deployment/env/.env.docker.example
 
-documents/
+!/documents/
+/documents/*
+!/documents/architecture/
+/documents/architecture/*
+!/documents/architecture/deployment.json
+!/documents/architecture/deployment.html
+!/documents/architecture/deployment.svg
+!/documents/architecture/create-appointment.json
+!/documents/architecture/create-appointment.html

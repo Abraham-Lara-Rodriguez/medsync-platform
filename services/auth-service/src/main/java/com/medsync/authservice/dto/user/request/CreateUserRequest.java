@@ -1,6 +1,6 @@
 package com.medsync.authservice.dto.user.request;
 
-import com.medsync.authservice.domain.enums.Role;
+import com.medsync.authservice.domain.enums.auth.Role;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

@@ -2,8 +2,8 @@ package com.medsync.authservice.repository.user;
 
 
 import com.medsync.authservice.domain.entity.User;
-import com.medsync.authservice.domain.enums.Role;
-import com.medsync.authservice.domain.enums.UserStatus;
+import com.medsync.authservice.domain.enums.auth.Role;
+import com.medsync.authservice.domain.enums.user.UserStatus;
 import com.medsync.authservice.dto.user.request.UserFilter;
 import com.medsync.authservice.integration.AbstractIntegrationTest;
 import org.junit.jupiter.api.BeforeEach;

@@ -12,8 +12,6 @@ services:
     image: postgres:18
     container_name: patient-service-postgres
     restart: unless-stopped
-    env_file:
-      - ./.env
     environment:
       POSTGRES_DB: ${PATIENT_SERVER_DB_NAME}
       POSTGRES_USER: ${PATIENT_SERVER_DB_USERNAME}
@@ -35,8 +33,6 @@ services:
     image: postgres:18
     container_name: auth-service-postgres
     restart: unless-stopped
-    env_file:
-      - ./.env
     environment:
       POSTGRES_DB: ${AUTH_SERVER_DB_NAME}
       POSTGRES_USER: ${AUTH_SERVER_DB_USERNAME}
@@ -57,8 +53,6 @@ services:
     image: postgres:18
     container_name: appointment-service-postgres
     restart: unless-stopped
-    env_file:
-      - ./.env
     environment:
       POSTGRES_DB: ${APPOINTMENT_SERVER_DB_NAME}
       POSTGRES_USER: ${APPOINTMENT_SERVER_DB_USERNAME}
@@ -79,8 +73,6 @@ services:
     image: postgres:18
     container_name: doctor-service-postgres
     restart: unless-stopped
-    env_file:
-      - ./.env
     environment:
       POSTGRES_DB: ${DOCTOR_SERVER_DB_NAME}
       POSTGRES_USER: ${DOCTOR_SERVER_DB_USERNAME}
@@ -108,6 +100,9 @@ services:
     image: grafana/alloy:latest
     container_name: grafana-alloy
     restart: unless-stopped
+    environment:
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT}
+      GRAFANA_CLOUD_AUTHORIZATION: ${GRAFANA_CLOUD_AUTHORIZATION}
     # Start Alloy with its HTTP UI/API on port 12345 and load
     # the mounted River configuration file.
     command:
@@ -117,8 +112,6 @@ services:
       - /etc/alloy/config.alloy
     # Provides the Grafana Cloud OTLP endpoint and authorization
     # header to Alloy. Do not commit secrets from this file.
-    env_file:
-      - ./.env.docker
     volumes:
       # Mount the Alloy configuration read-only.
       - ./config.alloy/config.alloy:/etc/alloy/config.alloy:ro
@@ -156,6 +149,9 @@ services:
       OTEL_TRACES_EXPORTER: otlp
       OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
       OTEL_EXPORTER_OTLP_ENDPOINT: http://grafana-alloy:4318
+
+      SERVER_USER: ${SERVER_USER}
+      SERVER_PASSWORD: ${SERVER_PASSWORD}
     networks:
       - medsync-network
     healthcheck:
@@ -198,6 +194,8 @@ services:
       OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
       OTEL_EXPORTER_OTLP_ENDPOINT: http://grafana-alloy:4318
 
+      SERVER_USER: ${SERVER_USER}
+      SERVER_PASSWORD: ${SERVER_PASSWORD}
     depends_on:
       config-service:
         condition: service_healthy
@@ -245,6 +243,9 @@ services:
       OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
       OTEL_EXPORTER_OTLP_ENDPOINT: http://grafana-alloy:4318
     # Publish the API Gateway to the host for local client access.
+
+      SERVER_USER: ${SERVER_USER}
+      SERVER_PASSWORD: ${SERVER_PASSWORD}
     ports:
       - "8222:8222"
     depends_on:
@@ -313,6 +314,8 @@ services:
       OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
       OTEL_EXPORTER_OTLP_ENDPOINT: http://grafana-alloy:4318
 
+      SERVER_USER: ${SERVER_USER}
+      SERVER_PASSWORD: ${SERVER_PASSWORD}
     depends_on:
       auth-service-postgres:
         condition: service_healthy
@@ -376,6 +379,8 @@ services:
       OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
       OTEL_EXPORTER_OTLP_ENDPOINT: http://grafana-alloy:4318
 
+      SERVER_USER: ${SERVER_USER}
+      SERVER_PASSWORD: ${SERVER_PASSWORD}
     depends_on:
       patient-service-postgres:
         condition: service_healthy
@@ -436,6 +441,9 @@ services:
       OTEL_TRACES_EXPORTER: otlp
       OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
       OTEL_EXPORTER_OTLP_ENDPOINT: http://grafana-alloy:4318
+
+      SERVER_USER: ${SERVER_USER}
+      SERVER_PASSWORD: ${SERVER_PASSWORD}
     depends_on:
       doctor-service-postgres:
         condition: service_healthy
@@ -495,6 +503,9 @@ services:
       OTEL_TRACES_EXPORTER: otlp
       OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
       OTEL_EXPORTER_OTLP_ENDPOINT: http://grafana-alloy:4318
+
+      SERVER_USER: ${SERVER_USER}
+      SERVER_PASSWORD: ${SERVER_PASSWORD}
 
     depends_on:
       appointment-service-postgres:

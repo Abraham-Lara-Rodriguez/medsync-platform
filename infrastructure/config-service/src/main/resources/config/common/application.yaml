@@ -6,6 +6,8 @@ spring:
 logging:
   level:
     root: info
+    org.springframework.cloud.config.server.environment.NativeEnvironmentRepository: WARN
+    org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration: "OFF"
   pattern:
     console: "%clr(%d{yyyy-MM-dd HH:mm:ss}){faint} %clr([%thread]){faint} %clr(%-5level){highlight} %clr(%logger{36}){cyan} %clr(-){faint} %msg%n"
     file: "%d{yyyy-MM-dd HH:mm:ss} - [%thread] %-5level - %logger{36} - %msg%n"
@@ -23,20 +25,20 @@ management:
         include: health,info
   endpoint:
     health:
-      show-details: when-authorized
+      show-details: never
 
 eureka:
   client:
     serviceUrl:
-      defaultZone: http://${DISCOVERY_SERVER_HOSTNAME:localhost}:${DISCOVERY_SERVER_PORT:8761}/eureka/
+      defaultZone: http://${SERVER_USER}:${SERVER_PASSWORD}@${DISCOVERY_SERVER_HOSTNAME}:${DISCOVERY_SERVER_PORT}/eureka/
 
 medsync:
   security:
     secret-key: ${AUTH_SERVER_SECRET_KEY}
-    access-token-expiration: ${AUTH_SERVER_ACCESS_TOKEN_EXPIRATION:3600000}
-    refresh-token-expiration: ${AUTH_SERVER_REFRESH_TOKEN_EXPIRATION:86400000}
-    password-strength: ${AUTH_SERVER_PASSWORD_STRENGTH:10}
-    client-origin: ${AUTH_SERVER_CLIENT_ORIGIN:http://localhost:3000}
+    access-token-expiration: ${AUTH_SERVER_ACCESS_TOKEN_EXPIRATION}
+    refresh-token-expiration: ${AUTH_SERVER_REFRESH_TOKEN_EXPIRATION}
+    password-strength: ${AUTH_SERVER_PASSWORD_STRENGTH}
+    client-origin: ${AUTH_SERVER_CLIENT_ORIGIN}
   encryption:
     key: ${ENCRYPTION_KEY}
   hash:
@@ -45,5 +47,5 @@ medsync:
 app:
   bootstrap-admin:
     enabled: ${BOOTSTRAP_ADMIN_ENABLED:false}
-    email: ${BOOTSTRAP_ADMIN_EMAIL:}
-    password: ${BOOTSTRAP_ADMIN_PASSWORD:}
+    email: ${BOOTSTRAP_ADMIN_EMAIL}
+    password: ${BOOTSTRAP_ADMIN_PASSWORD}

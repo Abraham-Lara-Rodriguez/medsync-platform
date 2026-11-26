@@ -2,6 +2,10 @@ spring:
   application:
     name: api-gateway
   profiles:
-    active: ${GATEWAY_SERVER_PROFILES:dev}
+    active: ${GATEWAY_SERVER_PROFILES}
+  cloud:
+    config:
+      username: ${SERVER_USER}
+      password: ${SERVER_PASSWORD}
   config:
-    import: optional:configserver:http://${CONFIG_SERVER_HOSTNAME:localhost}:${CONFIG_SERVER_PORT:8888}
+    import: optional:configserver:http://${CONFIG_SERVER_HOSTNAME}:${CONFIG_SERVER_PORT}

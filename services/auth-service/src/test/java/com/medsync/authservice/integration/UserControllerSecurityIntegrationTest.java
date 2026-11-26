@@ -2,10 +2,11 @@ package com.medsync.authservice.integration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.medsync.authservice.domain.entity.User;
-import com.medsync.authservice.domain.enums.Role;
+import com.medsync.authservice.domain.enums.auth.Role;
 import com.medsync.authservice.dto.user.request.CreateUserRequest;
 import com.medsync.authservice.help.AuthTestHelper;
 import com.medsync.authservice.repository.user.UserRepository;
+import com.medsync.authservice.repository.auth.RefreshTokenRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -42,12 +43,15 @@ class UserControllerSecurityIntegrationTest extends AbstractIntegrationTest {
 
     @Autowired
     private UserRepository userRepository;
+    @Autowired
+    private RefreshTokenRepository refreshTokenRepository;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
 
     @BeforeEach
     void seed() {
+        refreshTokenRepository.deleteAll();
         userRepository.deleteAll();
 
         User admin = User.create(
